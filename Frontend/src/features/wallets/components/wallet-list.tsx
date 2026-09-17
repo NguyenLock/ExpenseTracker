@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Trash2 } from "lucide-react";
+import { ArrowLeftRight, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import {
@@ -31,6 +31,7 @@ type WalletListProps = {
   celebrateId?: string | null;
   onCelebrateComplete?: () => void;
   onEdit: (wallet: WalletType, origin: OriginRect) => void;
+  onTransfer: (wallet: WalletType, origin: OriginRect) => void;
 };
 
 export function WalletList({
@@ -38,6 +39,7 @@ export function WalletList({
   celebrateId,
   onCelebrateComplete,
   onEdit,
+  onTransfer,
 }: WalletListProps) {
   const deleteMutation = useDeleteWallet();
   const [pendingDelete, setPendingDelete] = useState<WalletType | null>(null);
@@ -60,6 +62,7 @@ export function WalletList({
       : deleteMutation.error
         ? "Unable to delete wallet"
         : null;
+  const canTransfer = wallets.length >= 2;
 
   return (
     <div className="flex flex-col gap-3">
@@ -107,6 +110,21 @@ export function WalletList({
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
+                    <button
+                      type="button"
+                      disabled={!canTransfer}
+                      onClick={(event) =>
+                        onTransfer(
+                          wallet,
+                          originFromElement(event.currentTarget),
+                        )
+                      }
+                      className="inline-flex size-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-primary/10 hover:text-primary disabled:opacity-40"
+                      aria-label={`Transfer from ${wallet.name}`}
+                      title="Transfer"
+                    >
+                      <ArrowLeftRight className="size-4" />
+                    </button>
                     <button
                       type="button"
                       onClick={(event) =>

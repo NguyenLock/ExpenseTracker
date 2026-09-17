@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import {
   Tabs,
@@ -26,7 +26,11 @@ import {
   useCreateDebt,
   useUpdateDebt,
 } from "../hooks/use-debt-mutations";
-import { debtSchema, type DebtFormValues } from "../schemas/debt-schema";
+import {
+  debtSchema,
+  toDebtPayload,
+  type DebtFormValues,
+} from "../schemas/debt-schema";
 import type { DebtDirectionEnum, DebtType } from "../types/debt-types";
 
 const DIRECTION_OPTIONS: { value: DebtDirectionEnum; label: string }[] = [
@@ -42,6 +46,13 @@ function todayIsoDate() {
   return `${y}-${m}-${d}`;
 }
 
+function formatMoney(value: number) {
+  return new Intl.NumberFormat(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
 type DebtFormProps = {
   debt?: DebtType | null;
   onDone?: () => void;
@@ -51,6 +62,7 @@ export function DebtForm({ debt, onDone }: DebtFormProps) {
   const createMutation = useCreateDebt();
   const updateMutation = useUpdateDebt();
   const isEditing = Boolean(debt);
+  const [useInstallment, setUseInstallment] = useState(false);
 
   const {
     register,
@@ -66,6 +78,9 @@ export function DebtForm({ debt, onDone }: DebtFormProps) {
       amount: 0,
       direction: "i_owe",
       dueDate: todayIsoDate(),
+      installmentCount: 1,
+      payWindowStartDay: undefined,
+      payWindowEndDay: undefined,
       note: "",
       autoRecord: false,
       walletId: "",
@@ -74,7 +89,18 @@ export function DebtForm({ debt, onDone }: DebtFormProps) {
   });
 
   const direction = useWatch({ control, name: "direction" });
+  const monthlyAmount = useWatch({ control, name: "amount" });
+  const installmentCount = useWatch({ control, name: "installmentCount" });
   const categoryType = direction === "i_owe" ? "expense" : "income";
+  const months = Math.max(1, Number(installmentCount) || 1);
+  const totalPreview =
+    useInstallment &&
+    typeof monthlyAmount === "number" &&
+    !Number.isNaN(monthlyAmount) &&
+    monthlyAmount > 0 &&
+    months > 1
+      ? Math.round(monthlyAmount * months * 100) / 100
+      : null;
 
   const { data: walletsData } = useWallets({ page: 1, limit: 100 });
   const { data: categoriesData } = useCategories({
@@ -87,22 +113,34 @@ export function DebtForm({ debt, onDone }: DebtFormProps) {
 
   useEffect(() => {
     if (debt) {
+      const installment =
+        (debt.installmentCount ?? 1) > 1 ||
+        debt.payWindowStartDay != null ||
+        debt.payWindowEndDay != null;
+      setUseInstallment(installment);
       reset({
         personName: debt.personName,
         amount: debt.amount,
         direction: debt.direction,
         dueDate: debt.dueDate.slice(0, 10),
+        installmentCount: debt.installmentCount ?? 1,
+        payWindowStartDay: debt.payWindowStartDay ?? undefined,
+        payWindowEndDay: debt.payWindowEndDay ?? undefined,
         note: debt.note ?? "",
         autoRecord: debt.autoRecord,
         walletId: debt.walletId,
         categoryId: debt.categoryId,
       });
     } else {
+      setUseInstallment(false);
       reset({
         personName: "",
         amount: 0,
         direction: "i_owe",
         dueDate: todayIsoDate(),
+        installmentCount: 1,
+        payWindowStartDay: undefined,
+        payWindowEndDay: undefined,
         note: "",
         autoRecord: false,
         walletId: "",
@@ -120,11 +158,16 @@ export function DebtForm({ debt, onDone }: DebtFormProps) {
         : null;
 
   const onSubmit = handleSubmit((values) => {
-    const payload = {
-      ...values,
-      autoRecord:
-        values.direction === "owed_to_me" ? values.autoRecord : false,
-    };
+    const payload = toDebtPayload(
+      useInstallment
+        ? values
+        : {
+            ...values,
+            installmentCount: 1,
+            payWindowStartDay: undefined,
+            payWindowEndDay: undefined,
+          },
+    );
 
     if (debt) {
       updateMutation.mutate(
@@ -187,7 +230,7 @@ export function DebtForm({ debt, onDone }: DebtFormProps) {
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="debt-amount" className="text-label-md text-foreground">
-          Amount
+          {useInstallment ? "Số tiền mỗi tháng" : "Số tiền"}
         </label>
         <Input
           id="debt-amount"
@@ -199,6 +242,11 @@ export function DebtForm({ debt, onDone }: DebtFormProps) {
         />
         {errors.amount ? (
           <p className="text-error">{errors.amount.message}</p>
+        ) : null}
+        {totalPreview != null ? (
+          <p className="text-caption text-muted-foreground">
+            Tổng {months} tháng: {formatMoney(totalPreview)}
+          </p>
         ) : null}
       </div>
 
@@ -219,6 +267,106 @@ export function DebtForm({ debt, onDone }: DebtFormProps) {
           <p className="text-error">{errors.dueDate.message}</p>
         ) : null}
       </div>
+
+      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border px-3 py-3">
+        <input
+          type="checkbox"
+          className="mt-1 size-4 accent-[var(--primary)]"
+          checked={useInstallment}
+          onChange={(event) => {
+            const checked = event.target.checked;
+            setUseInstallment(checked);
+            if (!checked) {
+              setValue("installmentCount", 1);
+              setValue("payWindowStartDay", undefined);
+              setValue("payWindowEndDay", undefined);
+            } else if ((installmentCount ?? 1) <= 1) {
+              setValue("installmentCount", 3);
+            }
+          }}
+        />
+        <span>
+          <span className="block text-sm font-medium text-foreground">
+            Trả góp
+          </span>
+          <span className="mt-0.5 block text-caption text-muted-foreground">
+            Giống Shopee Pay — nhiều tháng, cửa sổ trả nợ.
+          </span>
+        </span>
+      </label>
+
+      {useInstallment ? (
+        <div className="flex flex-col gap-3 rounded-xl border border-border bg-secondary/40 px-3 py-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="debt-installments"
+                className="text-label-md text-foreground"
+              >
+                Số tháng
+              </label>
+              <Input
+                id="debt-installments"
+                type="number"
+                min="2"
+                max="60"
+                step="1"
+                className="h-10"
+                {...register("installmentCount", { valueAsNumber: true })}
+              />
+              {errors.installmentCount ? (
+                <p className="text-error">{errors.installmentCount.message}</p>
+              ) : null}
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="debt-window-start"
+                className="text-label-md text-foreground"
+              >
+                Trả từ ngày
+              </label>
+              <Input
+                id="debt-window-start"
+                type="number"
+                min="1"
+                max="28"
+                step="1"
+                className="h-10"
+                placeholder="24"
+                {...register("payWindowStartDay", { valueAsNumber: true })}
+              />
+              {errors.payWindowStartDay ? (
+                <p className="text-error">{errors.payWindowStartDay.message}</p>
+              ) : null}
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="debt-window-end"
+                className="text-label-md text-foreground"
+              >
+                Đến ngày
+              </label>
+              <Input
+                id="debt-window-end"
+                type="number"
+                min="1"
+                max="28"
+                step="1"
+                className="h-10"
+                placeholder="10"
+                {...register("payWindowEndDay", { valueAsNumber: true })}
+              />
+              {errors.payWindowEndDay ? (
+                <p className="text-error">{errors.payWindowEndDay.message}</p>
+              ) : null}
+            </div>
+          </div>
+          <p className="text-caption text-muted-foreground">
+            Vd: từ ngày 24 đến ngày 10 tháng sau. Để trống cửa sổ = chỉ dùng
+            due date.
+          </p>
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-1.5">
         <span className="text-label-md text-foreground">Wallet</span>
@@ -337,8 +485,8 @@ export function DebtForm({ debt, onDone }: DebtFormProps) {
               Auto-add income on due date
             </span>
             <span className="mt-0.5 block text-caption text-muted-foreground">
-              When the date arrives, create income and credit the wallet
-              automatically.
+              When each installment window ends, create income and credit the
+              wallet automatically.
             </span>
           </span>
         </label>

@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import { toSearchParams } from "@/types/pagination-types";
-import type { DebtFormValues } from "../schemas/debt-schema";
+import type { DebtPayload } from "../schemas/debt-schema";
 import type {
   DebtDirectionEnum,
   DebtStatusEnum,
@@ -25,30 +25,17 @@ export function listDebtReminders() {
   return apiClient<DebtType[]>("/debts/reminders");
 }
 
-export function createDebt(data: DebtFormValues) {
+export function createDebt(data: DebtPayload) {
   return apiClient<DebtType>("/debts", {
     method: "POST",
-    body: {
-      ...data,
-      note: data.note?.trim() ? data.note.trim() : undefined,
-      autoRecord:
-        data.direction === "owed_to_me" ? Boolean(data.autoRecord) : false,
-    },
+    body: data,
   });
 }
 
-export function updateDebt(id: string, data: Partial<DebtFormValues>) {
+export function updateDebt(id: string, data: DebtPayload | Partial<DebtPayload>) {
   return apiClient<DebtType>(`/debts/${id}`, {
     method: "PATCH",
-    body: {
-      ...data,
-      note:
-        data.note === undefined
-          ? undefined
-          : data.note.trim()
-            ? data.note.trim()
-            : null,
-    },
+    body: data,
   });
 }
 

@@ -40,6 +40,21 @@ export class Debt {
   })
   amount: number;
 
+  /** Total months for installment plan (1 = one-shot). */
+  @Column({ name: 'installment_count', type: 'int', default: 1 })
+  installmentCount: number;
+
+  @Column({ name: 'paid_installments', type: 'int', default: 0 })
+  paidInstallments: number;
+
+  /** Payment window start day (1–28). Null = single dueDate reminder. */
+  @Column({ name: 'pay_window_start_day', type: 'int', nullable: true })
+  payWindowStartDay: number | null;
+
+  /** Payment window end day (1–28). Can be next month if < start day. */
+  @Column({ name: 'pay_window_end_day', type: 'int', nullable: true })
+  payWindowEndDay: number | null;
+
   @Column({ type: 'enum', enum: DebtDirection })
   direction: DebtDirection;
 

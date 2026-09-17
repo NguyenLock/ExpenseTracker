@@ -5,7 +5,17 @@ export type DebtType = {
   id: string;
   userId: string;
   personName: string;
+  /** Amount per month / installment */
   amount: number;
+  /** amount × installmentCount */
+  totalAmount: number;
+  installmentCount: number;
+  paidInstallments: number;
+  installmentAmount: number;
+  payWindowStartDay: number | null;
+  payWindowEndDay: number | null;
+  windowStart: string | null;
+  windowEnd: string | null;
   direction: DebtDirectionEnum;
   dueDate: string;
   note: string | null;
@@ -22,4 +32,5 @@ export type DebtType = {
   categoryIcon?: string;
   isOverdue?: boolean;
   isDueToday?: boolean;
+  isInPayWindow?: boolean;
 };

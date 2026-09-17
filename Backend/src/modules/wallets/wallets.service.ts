@@ -1,13 +1,15 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import type { PaginationQueryDto } from '../../common/dto/pagination-query.dto.js';
 import { paginated } from '../../common/dto/pagination.dto.js';
 import type { CreateWalletDto } from './dto/create-wallet.dto.js';
+import type { TransferWalletDto } from './dto/transfer-wallet.dto.js';
 import type { UpdateWalletDto } from './dto/update-wallet.dto.js';
 import { Wallet } from './entities/wallet.entity.js';
 
@@ -16,6 +18,7 @@ export class WalletsService {
   constructor(
     @InjectRepository(Wallet)
     private readonly walletsRepository: Repository<Wallet>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async findAll(userId: string, query: PaginationQueryDto) {
@@ -66,6 +69,43 @@ export class WalletsService {
     if (dto.balance !== undefined) wallet.balance = dto.balance;
 
     return this.walletsRepository.save(wallet);
+  }
+
+  async transfer(userId: string, dto: TransferWalletDto) {
+    if (dto.fromWalletId === dto.toWalletId) {
+      throw new BadRequestException('Choose two different wallets');
+    }
+
+    return this.dataSource.transaction(async (manager) => {
+      const wallets = manager.getRepository(Wallet);
+      const from = await wallets.findOne({
+        where: { id: dto.fromWalletId, userId },
+      });
+      const to = await wallets.findOne({
+        where: { id: dto.toWalletId, userId },
+      });
+
+      if (!from || !to) {
+        throw new NotFoundException('Wallet not found');
+      }
+
+      const fromBalance = Number(from.balance);
+      if (fromBalance < dto.amount) {
+        throw new BadRequestException('Insufficient balance');
+      }
+
+      from.balance = fromBalance - dto.amount;
+      to.balance = Number(to.balance) + dto.amount;
+
+      await wallets.save([from, to]);
+
+      return {
+        from: { id: from.id, name: from.name, balance: from.balance },
+        to: { id: to.id, name: to.name, balance: to.balance },
+        amount: dto.amount,
+        note: dto.note?.trim() || null,
+      };
+    });
   }
 
   async remove(userId: string, id: string) {

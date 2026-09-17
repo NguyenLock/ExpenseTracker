@@ -26,6 +26,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { User } from '../users/entities/user.entity.js';
 import { CreateWalletDto } from './dto/create-wallet.dto.js';
 import { PaginatedWalletsResponseDto } from './dto/paginated-wallets-response.dto.js';
+import { TransferWalletDto } from './dto/transfer-wallet.dto.js';
 import { UpdateWalletDto } from './dto/update-wallet.dto.js';
 import { WalletResponseDto } from './dto/wallet-response.dto.js';
 import { WalletsService } from './wallets.service.js';
@@ -49,6 +50,13 @@ export class WalletsController {
   @ApiCreatedResponse({ type: WalletResponseDto })
   create(@CurrentUser() user: User, @Body() dto: CreateWalletDto) {
     return this.walletsService.create(user.id, dto);
+  }
+
+  @Post('transfer')
+  @ApiOperation({ summary: 'Transfer balance between wallets' })
+  @ApiOkResponse({ description: 'Updated wallet balances after transfer' })
+  transfer(@CurrentUser() user: User, @Body() dto: TransferWalletDto) {
+    return this.walletsService.transfer(user.id, dto);
   }
 
   @Patch(':id')

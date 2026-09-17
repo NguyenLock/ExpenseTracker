@@ -46,7 +46,8 @@ export function DebtsPage() {
         <div>
           <h2 className="text-h1 text-foreground">Debts</h2>
           <p className="mt-1 text-body-md text-muted">
-            Reminders to pay people back — and auto income when they pay you.
+            One-shot or installment plans (e.g. 3 months, pay day 24→10) — auto
+            closes when paid off.
           </p>
         </div>
         <button
@@ -104,7 +105,7 @@ export function DebtsPage() {
         open={modalOpen}
         origin={modalOrigin}
         onClose={closeModal}
-        className="max-w-md"
+        className="max-w-lg"
       >
         <div className="mb-4 flex items-center justify-between gap-3">
           <h3 className="text-h4 text-foreground">

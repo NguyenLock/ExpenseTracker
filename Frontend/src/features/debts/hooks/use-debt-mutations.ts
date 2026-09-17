@@ -7,9 +7,11 @@ import {
   settleDebt,
   updateDebt,
 } from "../api/debts-api";
-import type { DebtFormValues } from "../schemas/debt-schema";
+import type { DebtPayload } from "../schemas/debt-schema";
 
-async function invalidateDebtQueries(queryClient: ReturnType<typeof useQueryClient>) {
+async function invalidateDebtQueries(
+  queryClient: ReturnType<typeof useQueryClient>,
+) {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: ["debts"] }),
     queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
@@ -21,7 +23,7 @@ async function invalidateDebtQueries(queryClient: ReturnType<typeof useQueryClie
 export function useCreateDebt() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: DebtFormValues) => createDebt(data),
+    mutationFn: (data: DebtPayload) => createDebt(data),
     onSuccess: async () => {
       await invalidateDebtQueries(queryClient);
     },
@@ -31,13 +33,8 @@ export function useCreateDebt() {
 export function useUpdateDebt() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: Partial<DebtFormValues>;
-    }) => updateDebt(id, data),
+    mutationFn: ({ id, data }: { id: string; data: DebtPayload }) =>
+      updateDebt(id, data),
     onSuccess: async () => {
       await invalidateDebtQueries(queryClient);
     },

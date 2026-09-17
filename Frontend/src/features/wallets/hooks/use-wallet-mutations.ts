@@ -4,7 +4,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   createWallet,
   deleteWallet,
+  transferWallet,
   updateWallet,
+  type TransferWalletPayload,
 } from "../api/wallets-api";
 import type { WalletFormValues } from "../schemas/wallet-schema";
 
@@ -47,6 +49,20 @@ export function useDeleteWallet() {
 
   return useMutation({
     mutationFn: (id: string) => deleteWallet(id),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["wallets"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
+      ]);
+    },
+  });
+}
+
+export function useTransferWallet() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: TransferWalletPayload) => transferWallet(data),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["wallets"] }),

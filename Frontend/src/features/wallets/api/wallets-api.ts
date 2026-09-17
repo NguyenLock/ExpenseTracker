@@ -35,3 +35,22 @@ export function deleteWallet(id: string) {
     method: "DELETE",
   });
 }
+
+export type TransferWalletPayload = {
+  fromWalletId: string;
+  toWalletId: string;
+  amount: number;
+  note?: string;
+};
+
+export function transferWallet(data: TransferWalletPayload) {
+  return apiClient<{
+    from: { id: string; name: string; balance: number };
+    to: { id: string; name: string; balance: number };
+    amount: number;
+    note: string | null;
+  }>("/wallets/transfer", {
+    method: "POST",
+    body: data,
+  });
+}

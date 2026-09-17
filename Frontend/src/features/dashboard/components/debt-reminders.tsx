@@ -63,9 +63,15 @@ export function DebtReminders({ debts }: DebtRemindersProps) {
                   : `${debt.personName} should pay you`}
               </p>
               <p className="text-caption text-muted-foreground">
-                Due {debt.dueDate}
+                {debt.windowStart && debt.windowEnd
+                  ? `${debt.windowStart} – ${debt.windowEnd}`
+                  : `Due ${debt.dueDate}`}
+                {debt.installmentCount > 1
+                  ? ` · ${debt.paidInstallments + 1}/${debt.installmentCount}`
+                  : ""}
+                {debt.isInPayWindow ? " · Pay now" : ""}
                 {debt.isOverdue ? " · Overdue" : ""}
-                {debt.isDueToday ? " · Today" : ""}
+                {debt.isDueToday && !debt.isInPayWindow ? " · Today" : ""}
                 {debt.autoRecord ? " · Auto" : ""}
               </p>
             </div>
@@ -75,7 +81,16 @@ export function DebtReminders({ debts }: DebtRemindersProps) {
                 debt.direction === "i_owe" ? "text-danger" : "text-success",
               )}
             >
-              {formatMoney(debt.amount)}
+              {formatMoney(
+                debt.installmentCount > 1
+                  ? debt.installmentAmount
+                  : debt.amount,
+              )}
+              {debt.installmentCount > 1 ? (
+                <span className="ml-1 text-caption font-normal text-muted-foreground">
+                  /tháng
+                </span>
+              ) : null}
             </p>
             <button
               type="button"
@@ -98,7 +113,11 @@ export function DebtReminders({ debts }: DebtRemindersProps) {
               className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg bg-primary/10 px-2.5 text-xs font-medium text-primary hover:bg-primary/15 disabled:opacity-60"
             >
               <Check className="size-3.5" />
-              {debt.direction === "i_owe" ? "Paid" : "Record"}
+              {debt.installmentCount > 1
+                ? "Pay"
+                : debt.direction === "i_owe"
+                  ? "Paid"
+                  : "Record"}
             </button>
           </li>
         ))}

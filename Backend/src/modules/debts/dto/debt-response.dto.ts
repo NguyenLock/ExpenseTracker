@@ -11,8 +11,32 @@ export class DebtResponseDto {
   @ApiProperty()
   personName: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Amount per installment / month' })
   amount: number;
+
+  @ApiProperty({ description: 'Total = amount × installmentCount' })
+  totalAmount: number;
+
+  @ApiProperty()
+  installmentCount: number;
+
+  @ApiProperty()
+  paidInstallments: number;
+
+  @ApiProperty({ description: 'Amount for the next / current installment' })
+  installmentAmount: number;
+
+  @ApiPropertyOptional({ nullable: true })
+  payWindowStartDay: number | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  payWindowEndDay: number | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  windowStart: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  windowEnd: string | null;
 
   @ApiProperty({ enum: DebtDirection })
   direction: DebtDirection;
@@ -61,4 +85,7 @@ export class DebtResponseDto {
 
   @ApiPropertyOptional()
   isDueToday?: boolean;
+
+  @ApiPropertyOptional()
+  isInPayWindow?: boolean;
 }

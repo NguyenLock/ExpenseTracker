@@ -30,16 +30,33 @@ export class TransactionsService {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
 
-    const [items, total] = await this.transactionsRepository.findAndCount({
-      where: {
-        userId,
-        ...(query.type ? { type: query.type } : {}),
-      },
-      relations: { wallet: true, category: true },
-      order: { transactionDate: 'DESC', createdAt: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    const from = query.fromDate?.slice(0, 10);
+    const to = query.toDate?.slice(0, 10);
+    const qb = this.transactionsRepository
+      .createQueryBuilder('t')
+      .leftJoinAndSelect('t.wallet', 'wallet')
+      .leftJoinAndSelect('t.category', 'category')
+      .where('t.userId = :userId', { userId });
+
+    if (query.type) {
+      qb.andWhere('t.type = :type', { type: query.type });
+    }
+    if (from && to) {
+      const start = from <= to ? from : to;
+      const end = from <= to ? to : from;
+      qb.andWhere('t.transactionDate BETWEEN :start AND :end', { start, end });
+    } else if (from) {
+      qb.andWhere('t.transactionDate >= :from', { from });
+    } else if (to) {
+      qb.andWhere('t.transactionDate <= :to', { to });
+    }
+
+    const [items, total] = await qb
+      .orderBy('t.transactionDate', 'DESC')
+      .addOrderBy('t.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
 
     return paginated(
       items.map((item) => this.toResponse(item)),

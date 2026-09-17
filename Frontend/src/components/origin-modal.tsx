@@ -150,7 +150,7 @@ export function OriginModal({
         role={role}
         aria-modal="true"
         className={cn(
-          "relative z-10 w-full overflow-hidden rounded-xl bg-surface p-5 shadow-lg ring-1 ring-border",
+          "relative z-10 max-h-[min(90vh,720px)] w-full overflow-y-auto rounded-xl bg-surface p-5 shadow-lg ring-1 ring-border",
           "will-change-transform",
           className,
         )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, X } from "lucide-react";
+import { ArrowLeftRight, Plus, X } from "lucide-react";
 import { useState } from "react";
 import {
   OriginModal,
@@ -13,13 +13,17 @@ import { useWallets } from "../hooks/use-wallets";
 import type { WalletType } from "../types/wallet-types";
 import { WalletForm } from "./wallet-form";
 import { WalletList } from "./wallet-list";
+import { WalletTransferForm } from "./wallet-transfer-form";
 
 const PAGE_SIZE = 10;
+
+type ModalMode = "create" | "edit" | "transfer" | null;
 
 export function WalletsSettings() {
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<WalletType | null>(null);
-  const [creating, setCreating] = useState(false);
+  const [transferFromId, setTransferFromId] = useState<string | null>(null);
+  const [mode, setMode] = useState<ModalMode>(null);
   const [modalOrigin, setModalOrigin] = useState<OriginRect | null>(null);
   const [celebrateId, setCelebrateId] = useState<string | null>(null);
 
@@ -28,12 +32,27 @@ export function WalletsSettings() {
     limit: PAGE_SIZE,
   });
 
-  const modalOpen = creating || Boolean(editing);
+  const modalOpen = mode !== null;
 
   const closeModal = () => {
-    setCreating(false);
+    setMode(null);
     setEditing(null);
+    setTransferFromId(null);
   };
+
+  const openTransfer = (origin: OriginRect, fromWalletId?: string) => {
+    setModalOrigin(origin);
+    setEditing(null);
+    setTransferFromId(fromWalletId ?? null);
+    setMode("transfer");
+  };
+
+  const modalTitle =
+    mode === "transfer"
+      ? "Transfer"
+      : mode === "edit"
+        ? "Edit wallet"
+        : "New wallet";
 
   return (
     <div className="flex flex-col gap-6">
@@ -47,18 +66,30 @@ export function WalletsSettings() {
             Track cash, bank accounts, and e-wallets.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={(event) => {
-            setModalOrigin(originFromElement(event.currentTarget));
-            setEditing(null);
-            setCreating(true);
-          }}
-          className="inline-flex h-button-md items-center justify-center gap-2 rounded-xl bg-primary px-4 text-button-md text-white transition hover:opacity-95 active:scale-[0.98]"
-        >
-          <Plus className="size-4" />
-          Add wallet
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={(event) =>
+              openTransfer(originFromElement(event.currentTarget))
+            }
+            className="inline-flex h-button-md items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 text-button-md text-foreground transition hover:bg-background active:scale-[0.98]"
+          >
+            <ArrowLeftRight className="size-4" />
+            Transfer
+          </button>
+          <button
+            type="button"
+            onClick={(event) => {
+              setModalOrigin(originFromElement(event.currentTarget));
+              setEditing(null);
+              setMode("create");
+            }}
+            className="inline-flex h-button-md items-center justify-center gap-2 rounded-xl bg-primary px-4 text-button-md text-white transition hover:opacity-95 active:scale-[0.98]"
+          >
+            <Plus className="size-4" />
+            Add wallet
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -75,9 +106,10 @@ export function WalletsSettings() {
             onCelebrateComplete={() => setCelebrateId(null)}
             onEdit={(wallet, origin) => {
               setModalOrigin(origin);
-              setCreating(false);
               setEditing(wallet);
+              setMode("edit");
             }}
+            onTransfer={(wallet, origin) => openTransfer(origin, wallet.id)}
           />
           {data ? (
             <div className="mt-4">
@@ -98,9 +130,7 @@ export function WalletsSettings() {
         className="max-w-md"
       >
         <div className="mb-4 flex items-center justify-between gap-3">
-          <h3 className="text-h4 text-foreground">
-            {editing ? "Edit wallet" : "New wallet"}
-          </h3>
+          <h3 className="text-h4 text-foreground">{modalTitle}</h3>
           <button
             type="button"
             onClick={closeModal}
@@ -110,14 +140,21 @@ export function WalletsSettings() {
             <X className="size-4 stroke-[2.25]" />
           </button>
         </div>
-        <WalletForm
-          wallet={editing}
-          onDone={closeModal}
-          onCreated={(wallet) => {
-            setPage(1);
-            setCelebrateId(wallet.id);
-          }}
-        />
+        {mode === "transfer" ? (
+          <WalletTransferForm
+            fromWalletId={transferFromId}
+            onDone={closeModal}
+          />
+        ) : (
+          <WalletForm
+            wallet={editing}
+            onDone={closeModal}
+            onCreated={(wallet) => {
+              setPage(1);
+              setCelebrateId(wallet.id);
+            }}
+          />
+        )}
       </OriginModal>
     </div>
   );

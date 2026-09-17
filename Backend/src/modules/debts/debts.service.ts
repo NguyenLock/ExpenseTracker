@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LessThanOrEqual, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Category } from '../categories/entities/category.entity.js';
 import { CategoryType } from '../categories/enums/category-type.enum.js';
 import { TransactionsService } from '../transactions/transactions.service.js';
@@ -46,18 +46,21 @@ export class DebtsService {
   async getReminders(userId: string) {
     await this.processDueAutos(userId);
 
-    const today = this.todayIso();
     const open = await this.debtsRepository.find({
       where: { userId, status: DebtStatus.OPEN },
       relations: { wallet: true, category: true },
       order: { dueDate: 'ASC' },
     });
 
-    // Remind: anything due today or overdue, plus upcoming within 7 days.
-    const weekAhead = this.addDaysIso(today, 7);
     return open
-      .filter((debt) => debt.dueDate <= weekAhead)
-      .map((item) => this.toResponse(item));
+      .map((item) => this.toResponse(item))
+      .filter(
+        (debt) =>
+          debt.isInPayWindow ||
+          debt.isOverdue ||
+          debt.isDueToday ||
+          this.isUpcoming(debt.windowEnd ?? debt.dueDate, 7),
+      );
   }
 
   async create(userId: string, dto: CreateDebtDto) {
@@ -68,7 +71,9 @@ export class DebtsService {
 
     await this.assertWallet(userId, dto.walletId);
     await this.assertCategory(userId, dto.categoryId, expectedType);
+    this.assertPayWindow(dto.payWindowStartDay, dto.payWindowEndDay);
 
+    const installmentCount = dto.installmentCount ?? 1;
     const autoRecord =
       dto.direction === DebtDirection.OWED_TO_ME
         ? Boolean(dto.autoRecord)
@@ -78,6 +83,10 @@ export class DebtsService {
       userId,
       personName: dto.personName.trim(),
       amount: dto.amount,
+      installmentCount,
+      paidInstallments: 0,
+      payWindowStartDay: dto.payWindowStartDay ?? null,
+      payWindowEndDay: dto.payWindowEndDay ?? null,
       direction: dto.direction,
       dueDate: dto.dueDate.slice(0, 10),
       note: dto.note?.trim() || null,
@@ -100,6 +109,11 @@ export class DebtsService {
     if (debt.status !== DebtStatus.OPEN) {
       throw new BadRequestException('Only open debts can be updated');
     }
+    if (debt.paidInstallments > 0) {
+      throw new BadRequestException(
+        'Cannot edit a debt after installments have been paid',
+      );
+    }
 
     const nextDirection = dto.direction ?? debt.direction;
     const nextWalletId = dto.walletId ?? debt.walletId;
@@ -112,10 +126,29 @@ export class DebtsService {
     await this.assertWallet(userId, nextWalletId);
     await this.assertCategory(userId, nextCategoryId, expectedType);
 
+    const nextStart =
+      dto.payWindowStartDay !== undefined
+        ? dto.payWindowStartDay
+        : debt.payWindowStartDay;
+    const nextEnd =
+      dto.payWindowEndDay !== undefined
+        ? dto.payWindowEndDay
+        : debt.payWindowEndDay;
+    this.assertPayWindow(nextStart ?? undefined, nextEnd ?? undefined);
+
     if (dto.personName !== undefined) debt.personName = dto.personName.trim();
     if (dto.amount !== undefined) debt.amount = dto.amount;
     if (dto.direction !== undefined) debt.direction = dto.direction;
     if (dto.dueDate !== undefined) debt.dueDate = dto.dueDate.slice(0, 10);
+    if (dto.installmentCount !== undefined) {
+      debt.installmentCount = dto.installmentCount;
+    }
+    if (dto.payWindowStartDay !== undefined) {
+      debt.payWindowStartDay = dto.payWindowStartDay;
+    }
+    if (dto.payWindowEndDay !== undefined) {
+      debt.payWindowEndDay = dto.payWindowEndDay;
+    }
     if (dto.note !== undefined) {
       debt.note = dto.note?.trim() ? dto.note.trim() : null;
     }
@@ -142,7 +175,7 @@ export class DebtsService {
       throw new BadRequestException('Debt is already settled');
     }
 
-    return this.settleDebt(userId, debt);
+    return this.payInstallment(userId, debt);
   }
 
   async remove(userId: string, id: string) {
@@ -151,7 +184,6 @@ export class DebtsService {
     await this.debtsRepository.remove(debt);
   }
 
-  /** Create income for due auto receivables. Safe to call often. */
   async processDueAutos(userId: string) {
     const today = this.todayIso();
     const due = await this.debtsRepository.find({
@@ -160,46 +192,113 @@ export class DebtsService {
         status: DebtStatus.OPEN,
         direction: DebtDirection.OWED_TO_ME,
         autoRecord: true,
-        dueDate: LessThanOrEqual(today),
       },
     });
 
     for (const debt of due) {
-      try {
-        await this.settleDebt(userId, debt);
-      } catch {
-        // Skip broken rows (missing wallet/category) so one bad debt doesn't block others.
+      let current: Debt | null = debt;
+      while (current && current.status === DebtStatus.OPEN) {
+        const window = this.currentWindow(current);
+        const triggerDate =
+          window?.end ?? String(current.dueDate).slice(0, 10);
+        if (today < triggerDate) break;
+        try {
+          await this.payInstallment(userId, current);
+          current = await this.debtsRepository.findOne({
+            where: { id: debt.id, userId },
+          });
+        } catch {
+          break;
+        }
       }
     }
   }
 
-  private async settleDebt(userId: string, debt: Debt) {
+  private async payInstallment(userId: string, debt: Debt) {
     const type =
       debt.direction === DebtDirection.I_OWE
         ? CategoryType.EXPENSE
         : CategoryType.INCOME;
 
-    const note =
+    const installmentAmount = this.installmentAmountFor(debt);
+    const paidNext = debt.paidInstallments + 1;
+    const noteBase =
       debt.note?.trim() ||
       (debt.direction === DebtDirection.I_OWE
         ? `Trả nợ ${debt.personName}`
         : `${debt.personName} trả nợ`);
+    const note =
+      debt.installmentCount > 1
+        ? `${noteBase} (${paidNext}/${debt.installmentCount})`
+        : noteBase;
+
+    const window = this.currentWindow(debt);
+    const transactionDate =
+      this.todayIso() <= (window?.end ?? String(debt.dueDate).slice(0, 10))
+        ? this.todayIso()
+        : (window?.end ?? String(debt.dueDate).slice(0, 10));
 
     const transaction = await this.transactionsService.create(userId, {
       type,
-      amount: debt.amount,
+      amount: installmentAmount,
       walletId: debt.walletId,
       categoryId: debt.categoryId,
       note,
-      transactionDate: debt.dueDate.slice(0, 10),
+      transactionDate,
     });
 
-    debt.status = DebtStatus.SETTLED;
-    debt.settledAt = new Date();
+    debt.paidInstallments = paidNext;
     debt.transactionId = transaction.id;
-    await this.debtsRepository.save(debt);
 
+    if (paidNext >= debt.installmentCount) {
+      debt.status = DebtStatus.SETTLED;
+      debt.settledAt = new Date();
+    }
+
+    await this.debtsRepository.save(debt);
     return this.findOne(userId, debt.id);
+  }
+
+  private installmentAmountFor(debt: Debt) {
+    const monthly = Number(debt.amount);
+    const count = Math.max(1, debt.installmentCount);
+    if (debt.paidInstallments >= count) return 0;
+    return monthly;
+  }
+
+  private currentWindow(debt: Debt) {
+    return this.windowFor(debt, debt.paidInstallments);
+  }
+
+  private windowFor(debt: Debt, index: number) {
+    const startDay = debt.payWindowStartDay;
+    const endDay = debt.payWindowEndDay;
+    if (!startDay || !endDay) return null;
+
+    const anchor = String(debt.dueDate).slice(0, 10);
+    const [ay, am] = anchor.split('-').map(Number);
+    // First cycle month = month of dueDate; then + index months
+    let year = ay;
+    let month = am - 1 + index;
+    year += Math.floor(month / 12);
+    month = ((month % 12) + 12) % 12;
+
+    const start = new Date(year, month, startDay);
+    let endYear = year;
+    let endMonth = month;
+    if (endDay < startDay) {
+      endMonth += 1;
+      if (endMonth > 11) {
+        endMonth = 0;
+        endYear += 1;
+      }
+    }
+    const end = new Date(endYear, endMonth, endDay);
+
+    return {
+      start: this.toIsoDate(start),
+      end: this.toIsoDate(end),
+    };
   }
 
   private async findOne(userId: string, id: string) {
@@ -236,32 +335,65 @@ export class DebtsService {
     }
   }
 
+  private assertPayWindow(start?: number | null, end?: number | null) {
+    if ((start == null) !== (end == null)) {
+      throw new BadRequestException(
+        'Provide both pay window start and end days, or neither',
+      );
+    }
+  }
+
   private todayIso() {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
+    return this.toIsoDate(new Date());
+  }
+
+  private toIsoDate(date: Date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
   }
 
-  private addDaysIso(iso: string, days: number) {
-    const [y, m, d] = iso.split('-').map(Number);
-    const date = new Date(y, m - 1, d);
-    date.setDate(date.getDate() + days);
-    const yy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const dd = String(date.getDate()).padStart(2, '0');
-    return `${yy}-${mm}-${dd}`;
+  private isUpcoming(iso: string, withinDays: number) {
+    const today = this.todayIso();
+    if (iso < today) return false;
+    const [y, m, d] = today.split('-').map(Number);
+    const limit = new Date(y, m - 1, d);
+    limit.setDate(limit.getDate() + withinDays);
+    return iso <= this.toIsoDate(limit);
   }
 
   private toResponse(debt: Debt) {
     const today = this.todayIso();
     const dueDate = String(debt.dueDate).slice(0, 10);
+    const window = this.currentWindow(debt);
+    const windowStart = window?.start ?? null;
+    const windowEnd = window?.end ?? null;
+    const effectiveDue = windowEnd ?? dueDate;
+
+    const isInPayWindow = Boolean(
+      windowStart &&
+        windowEnd &&
+        today >= windowStart &&
+        today <= windowEnd,
+    );
+
     return {
       id: debt.id,
       userId: debt.userId,
       personName: debt.personName,
       amount: debt.amount,
+      totalAmount:
+        Math.round(
+          Number(debt.amount) * Math.max(1, debt.installmentCount) * 100,
+        ) / 100,
+      installmentCount: debt.installmentCount,
+      paidInstallments: debt.paidInstallments,
+      installmentAmount: this.installmentAmountFor(debt),
+      payWindowStartDay: debt.payWindowStartDay,
+      payWindowEndDay: debt.payWindowEndDay,
+      windowStart,
+      windowEnd,
       direction: debt.direction,
       dueDate,
       note: debt.note,
@@ -276,8 +408,15 @@ export class DebtsService {
       walletName: debt.wallet?.name,
       categoryName: debt.category?.name,
       categoryIcon: debt.category?.icon,
-      isOverdue: debt.status === DebtStatus.OPEN && dueDate < today,
-      isDueToday: debt.status === DebtStatus.OPEN && dueDate === today,
+      isOverdue:
+        debt.status === DebtStatus.OPEN &&
+        !isInPayWindow &&
+        effectiveDue < today,
+      isDueToday:
+        debt.status === DebtStatus.OPEN &&
+        (today === effectiveDue || isInPayWindow),
+      isInPayWindow:
+        debt.status === DebtStatus.OPEN ? isInPayWindow : false,
     };
   }
 }

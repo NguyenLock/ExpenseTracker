@@ -69,12 +69,17 @@ export function DebtList({ debts, onEdit }: DebtListProps) {
                       ? `Remember to pay ${debt.personName}`
                       : `${debt.personName} owes you`}
                   </p>
+                  {debt.status === "open" && debt.isInPayWindow ? (
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                      Pay window
+                    </span>
+                  ) : null}
                   {debt.status === "open" && debt.isOverdue ? (
                     <span className="rounded-full bg-danger/10 px-2 py-0.5 text-[11px] font-medium text-danger">
                       Overdue
                     </span>
                   ) : null}
-                  {debt.status === "open" && debt.isDueToday ? (
+                  {debt.status === "open" && debt.isDueToday && !debt.isInPayWindow ? (
                     <span className="rounded-full bg-warning/15 px-2 py-0.5 text-[11px] font-medium text-warning">
                       Due today
                     </span>
@@ -91,7 +96,14 @@ export function DebtList({ debts, onEdit }: DebtListProps) {
                   ) : null}
                 </div>
                 <p className="mt-0.5 text-caption text-muted-foreground">
-                  Due {formatDate(debt.dueDate)} · {debt.walletName ?? "Wallet"} ·{" "}
+                  {debt.windowStart && debt.windowEnd
+                    ? `Window ${formatDate(debt.windowStart)} – ${formatDate(debt.windowEnd)}`
+                    : `Due ${formatDate(debt.dueDate)}`}
+                  {debt.installmentCount > 1
+                    ? ` · ${debt.paidInstallments}/${debt.installmentCount}`
+                    : ""}
+                  {" · "}
+                  {debt.walletName ?? "Wallet"} ·{" "}
                   {debt.categoryName ?? "Category"}
                   {debt.note ? ` · ${debt.note}` : ""}
                 </p>
@@ -102,7 +114,20 @@ export function DebtList({ debts, onEdit }: DebtListProps) {
                   )}
                 >
                   {debt.direction === "i_owe" ? "−" : "+"}
-                  {formatMoney(debt.amount)}
+                  {formatMoney(
+                    debt.status === "open"
+                      ? debt.installmentAmount
+                      : debt.amount,
+                  )}
+                  {debt.installmentCount > 1 ? (
+                    <span className="ml-1 text-caption font-normal text-muted-foreground">
+                      / tháng · tổng{" "}
+                      {formatMoney(
+                        debt.totalAmount ??
+                          debt.amount * debt.installmentCount,
+                      )}
+                    </span>
+                  ) : null}
                 </p>
               </div>
 
@@ -129,7 +154,13 @@ export function DebtList({ debts, onEdit }: DebtListProps) {
                     className="inline-flex h-8 items-center gap-1 rounded-lg bg-primary/10 px-2.5 text-xs font-medium text-primary hover:bg-primary/15 disabled:opacity-60"
                   >
                     <Check className="size-3.5" />
-                    {debt.direction === "i_owe" ? "Mark paid" : "Record"}
+                    {debt.installmentCount > 1
+                      ? debt.direction === "i_owe"
+                        ? "Pay installment"
+                        : "Record installment"
+                      : debt.direction === "i_owe"
+                        ? "Mark paid"
+                        : "Record"}
                   </button>
                 ) : null}
                 {debt.status === "open" ? (

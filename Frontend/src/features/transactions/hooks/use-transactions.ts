@@ -12,10 +12,12 @@ export function useTransactions(params: ListTransactionsParams = {}) {
   const page = params.page ?? 1;
   const limit = params.limit ?? DEFAULT_LIMIT;
   const type = params.type;
+  const fromDate = params.fromDate;
+  const toDate = params.toDate;
 
   return useQuery({
-    queryKey: ["transactions", { page, limit, type }],
-    queryFn: () => listTransactions({ page, limit, type }),
+    queryKey: ["transactions", { page, limit, type, fromDate, toDate }],
+    queryFn: () => listTransactions({ page, limit, type, fromDate, toDate }),
     placeholderData: (previous) => previous,
   });
 }

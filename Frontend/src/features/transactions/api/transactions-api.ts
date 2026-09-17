@@ -12,6 +12,8 @@ import type {
 
 export type ListTransactionsParams = PaginationParamsType & {
   type?: TransactionTypeEnum;
+  fromDate?: string;
+  toDate?: string;
 };
 
 export function listTransactions(params: ListTransactionsParams = {}) {
@@ -20,6 +22,8 @@ export function listTransactions(params: ListTransactionsParams = {}) {
       page: params.page,
       limit: params.limit,
       type: params.type,
+      fromDate: params.fromDate,
+      toDate: params.toDate,
     })}`,
   );
 }
