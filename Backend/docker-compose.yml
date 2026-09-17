@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: expense-tracker-db
+    restart: unless-stopped
+    ports:
+      - '${DB_PORT:-5435}:5432'
+    environment:
+      POSTGRES_USER: ${DB_USER:-expense}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-expense}
+      POSTGRES_DB: ${DB_NAME:-expense_tracker}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-expense} -d ${DB_NAME:-expense_tracker}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:

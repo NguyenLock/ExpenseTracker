@@ -1,0 +1,252 @@
+@import "tailwindcss";
+
+:root {
+  --primary: #2563eb;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+
+  --background: #fafafa;
+  --surface: #ffffff;
+  --foreground: #18181b;
+  --muted: #71717a;
+  --text-secondary: #71717a;
+}
+
+@theme inline {
+  --color-primary: var(--primary);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-text-secondary: var(--text-secondary);
+
+  --font-sans: var(--font-inter), ui-sans-serif, sans-serif;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), ui-sans-serif, sans-serif;
+  font-feature-settings: normal;
+  letter-spacing: normal;
+  /* Default app text: body-md */
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+}
+
+/* Display — landing pages only */
+.text-display-lg {
+  font-size: 48px;
+  line-height: 56px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.text-display-md {
+  font-size: 40px;
+  line-height: 48px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+/* Headings */
+.text-h1 {
+  font-size: 30px;
+  line-height: 36px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.text-h2 {
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.text-h3 {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.text-h4 {
+  font-size: 18px;
+  line-height: 28px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Body */
+.text-body-lg {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.text-body-md {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.text-body-sm {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.text-caption {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+/* Labels */
+.text-label-lg {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+}
+
+.text-label-md {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+.text-label-sm {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+}
+
+/* Buttons */
+.text-button-lg {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.text-button-md {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+}
+
+.text-button-sm {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+.h-button-lg {
+  height: 44px;
+}
+
+.h-button-md {
+  height: 40px;
+}
+
+.h-button-sm {
+  height: 32px;
+}
+
+/* Dashboard metrics */
+.text-metric-label {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.text-metric-value {
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.text-metric-change {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+/* Sidebar */
+.text-sidebar-item {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+}
+
+.text-sidebar-section {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Tables */
+.text-table-header {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+}
+
+.text-table-cell {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+}
+
+.text-table-amount {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+}
+
+/* Forms */
+.text-input-value {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+}
+
+.text-input-placeholder {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+  opacity: 0.6;
+}
+
+.text-helper {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+}
+
+.text-error {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--danger);
+}
