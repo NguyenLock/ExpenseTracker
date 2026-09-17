@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Wallet } from "lucide-react";
 
 export default function Home() {
@@ -9,25 +10,21 @@ export default function Home() {
           <h1 className="text-h1 text-foreground">ExpenseTracker</h1>
         </div>
         <p className="mt-4 text-body-md text-muted">
-          Frontend scaffold is ready. Start the app with{" "}
-          <code className="rounded bg-background px-1.5 py-0.5 font-mono text-caption text-foreground">
-            npm run dev
-          </code>
-          .
+          Track spending and stay on budget.
         </p>
-        <div className="mt-6 flex flex-wrap gap-2">
-          <span className="rounded-md bg-primary/10 px-2.5 py-1 text-label-sm text-primary">
-            Primary
-          </span>
-          <span className="rounded-md bg-success/10 px-2.5 py-1 text-label-sm text-success">
-            Success
-          </span>
-          <span className="rounded-md bg-danger/10 px-2.5 py-1 text-label-sm text-danger">
-            Danger
-          </span>
-          <span className="rounded-md bg-warning/10 px-2.5 py-1 text-label-sm text-warning">
-            Warning
-          </span>
+        <div className="mt-6 flex gap-3">
+          <Link
+            href="/login"
+            className="inline-flex h-button-md items-center justify-center rounded-lg bg-primary px-4 text-button-md text-white hover:opacity-90"
+          >
+            Sign in
+          </Link>
+          <Link
+            href="/register"
+            className="inline-flex h-button-md items-center justify-center rounded-lg border border-black/10 bg-surface px-4 text-button-md text-foreground hover:bg-background"
+          >
+            Create account
+          </Link>
         </div>
       </div>
     </main>

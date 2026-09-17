@@ -3,6 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
+import { AuthModule } from './modules/auth/auth.module.js';
+import { UsersModule } from './modules/users/users.module.js';
 
 @Module({
   imports: [
@@ -15,7 +17,7 @@ import { AppService } from './app.service.js';
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
         host: config.get<string>('DB_HOST', 'localhost'),
-        port: config.get<number>('DB_PORT', 5432),
+        port: Number(config.get('DB_PORT', 5432)),
         username: config.get<string>('DB_USER', 'expense'),
         password: config.get<string>('DB_PASSWORD', 'expense'),
         database: config.get<string>('DB_NAME', 'expense_tracker'),
@@ -23,6 +25,8 @@ import { AppService } from './app.service.js';
         synchronize: config.get<string>('NODE_ENV') !== 'production',
       }),
     }),
+    UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
