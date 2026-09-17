@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -25,6 +26,8 @@ import { User } from '../users/entities/user.entity.js';
 import { CategoriesService } from './categories.service.js';
 import { CategoryResponseDto } from './dto/category-response.dto.js';
 import { CreateCategoryDto } from './dto/create-category.dto.js';
+import { ListCategoriesQueryDto } from './dto/list-categories-query.dto.js';
+import { PaginatedCategoriesResponseDto } from './dto/paginated-categories-response.dto.js';
 import { UpdateCategoryDto } from './dto/update-category.dto.js';
 
 @ApiTags('categories')
@@ -35,10 +38,10 @@ export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List categories for current user' })
-  @ApiOkResponse({ type: [CategoryResponseDto] })
-  findAll(@CurrentUser() user: User) {
-    return this.categoriesService.findAll(user.id);
+  @ApiOperation({ summary: 'List categories for current user (paginated)' })
+  @ApiOkResponse({ type: PaginatedCategoriesResponseDto })
+  findAll(@CurrentUser() user: User, @Query() query: ListCategoriesQueryDto) {
+    return this.categoriesService.findAll(user.id, query);
   }
 
   @Post()

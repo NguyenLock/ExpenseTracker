@@ -7,6 +7,7 @@ import {
   originFromElement,
   type OriginRect,
 } from "@/components/origin-modal";
+import { SuccessBeamRow } from "@/components/success-beam-row";
 import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { useDeleteCategory } from "../hooks/use-category-mutations";
@@ -15,19 +16,26 @@ import { CategoryIconBadge } from "./category-icon-badge";
 
 type CategoryListProps = {
   categories: CategoryType[];
+  celebrateId?: string | null;
+  onCelebrateComplete?: () => void;
   onEdit: (category: CategoryType, origin: OriginRect) => void;
 };
 
-export function CategoryList({ categories, onEdit }: CategoryListProps) {
+export function CategoryList({
+  categories,
+  celebrateId,
+  onCelebrateComplete,
+  onEdit,
+}: CategoryListProps) {
   const deleteMutation = useDeleteCategory();
   const [pendingDelete, setPendingDelete] = useState<CategoryType | null>(null);
   const [deleteOrigin, setDeleteOrigin] = useState<OriginRect | null>(null);
 
   if (categories.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-black/10 bg-surface px-6 py-14 text-center">
-        <p className="text-body-md text-muted">No categories in this tab yet.</p>
-        <p className="mt-1 text-caption text-muted">
+      <div className="rounded-xl border border-dashed border-border bg-surface px-6 py-14 text-center shadow-sm">
+        <p className="text-body-md text-foreground">No categories in this tab yet.</p>
+        <p className="mt-1 text-caption text-muted-foreground">
           Use “Add category” to create one.
         </p>
       </div>
@@ -44,9 +52,9 @@ export function CategoryList({ categories, onEdit }: CategoryListProps) {
   return (
     <div className="flex flex-col gap-3">
       {errorMessage ? <p className="text-error">{errorMessage}</p> : null}
-      <div className="overflow-hidden rounded-2xl bg-surface shadow-sm ring-1 ring-black/[0.04]">
+      <div className="overflow-hidden rounded-xl bg-surface shadow-sm ring-1 ring-border">
         <table className="w-full text-left">
-          <thead className="border-b border-black/[0.04] bg-background/60">
+          <thead className="border-b border-border bg-background/70">
             <tr>
               <th className="px-4 py-3 text-table-header text-muted">Category</th>
               <th className="hidden px-4 py-3 text-table-header text-muted sm:table-cell">
@@ -59,9 +67,10 @@ export function CategoryList({ categories, onEdit }: CategoryListProps) {
           </thead>
           <tbody>
             {categories.map((category) => (
-              <tr
+              <SuccessBeamRow
                 key={category.id}
-                className="border-b border-black/[0.04] last:border-0"
+                celebrate={celebrateId === category.id}
+                onCelebrationComplete={onCelebrateComplete}
               >
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
@@ -90,7 +99,7 @@ export function CategoryList({ categories, onEdit }: CategoryListProps) {
                       onClick={(event) =>
                         onEdit(category, originFromElement(event.currentTarget))
                       }
-                      className="inline-flex size-8 items-center justify-center rounded-lg text-muted hover:bg-background hover:text-foreground"
+                      className="inline-flex size-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-background hover:text-foreground"
                       aria-label={`Edit ${category.name}`}
                     >
                       <Pencil className="size-4" />
@@ -102,14 +111,14 @@ export function CategoryList({ categories, onEdit }: CategoryListProps) {
                         setDeleteOrigin(originFromElement(event.currentTarget));
                         setPendingDelete(category);
                       }}
-                      className="inline-flex size-8 items-center justify-center rounded-lg text-muted hover:bg-danger/10 hover:text-danger disabled:opacity-60"
+                      className="inline-flex size-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-danger/10 hover:text-danger disabled:opacity-60"
                       aria-label={`Delete ${category.name}`}
                     >
                       <Trash2 className="size-4" />
                     </button>
                   </div>
                 </td>
-              </tr>
+              </SuccessBeamRow>
             ))}
           </tbody>
         </table>
@@ -131,15 +140,11 @@ export function CategoryList({ categories, onEdit }: CategoryListProps) {
         cancelLabel="Cancel"
         tone="danger"
         loading={deleteMutation.isPending}
-        onCancel={() => {
-          if (!deleteMutation.isPending) setPendingDelete(null);
-        }}
-        onConfirm={() => {
+        onConfirm={async () => {
           if (!pendingDelete) return;
-          deleteMutation.mutate(pendingDelete.id, {
-            onSuccess: () => setPendingDelete(null),
-          });
+          await deleteMutation.mutateAsync(pendingDelete.id);
         }}
+        onCancel={() => setPendingDelete(null)}
       />
     </div>
   );

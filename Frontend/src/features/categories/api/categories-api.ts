@@ -1,9 +1,24 @@
 import { apiClient } from "@/lib/api-client";
+import {
+  toSearchParams,
+  type PaginatedType,
+  type PaginationParamsType,
+} from "@/types/pagination-types";
 import type { CategoryFormValues } from "../schemas/category-schema";
-import type { CategoryType } from "../types/category-types";
+import type { CategoryType, CategoryTypeEnum } from "../types/category-types";
 
-export function listCategories() {
-  return apiClient<CategoryType[]>("/categories");
+export type ListCategoriesParams = PaginationParamsType & {
+  type?: CategoryTypeEnum;
+};
+
+export function listCategories(params: ListCategoriesParams = {}) {
+  return apiClient<PaginatedType<CategoryType>>(
+    `/categories${toSearchParams({
+      page: params.page,
+      limit: params.limit,
+      type: params.type,
+    })}`,
+  );
 }
 
 export function createCategory(data: CategoryFormValues) {

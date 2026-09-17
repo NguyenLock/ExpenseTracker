@@ -5,7 +5,9 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { paginated } from '../../common/dto/pagination.dto.js';
 import type { CreateCategoryDto } from './dto/create-category.dto.js';
+import type { ListCategoriesQueryDto } from './dto/list-categories-query.dto.js';
 import type { UpdateCategoryDto } from './dto/update-category.dto.js';
 import { Category } from './entities/category.entity.js';
 
@@ -16,11 +18,22 @@ export class CategoriesService {
     private readonly categoriesRepository: Repository<Category>,
   ) {}
 
-  findAll(userId: string) {
-    return this.categoriesRepository.find({
-      where: { userId },
-      order: { type: 'ASC', name: 'ASC' },
+  async findAll(userId: string, query: ListCategoriesQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const where = {
+      userId,
+      ...(query.type ? { type: query.type } : {}),
+    };
+
+    const [items, total] = await this.categoriesRepository.findAndCount({
+      where,
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+
+    return paginated(items, total, page, limit);
   }
 
   async findOne(userId: string, id: string) {

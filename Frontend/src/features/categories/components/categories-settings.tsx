@@ -1,36 +1,39 @@
 "use client";
 
 import { Plus, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from "@/components/animate-ui/components/radix/tabs";
 import {
   OriginModal,
   originFromElement,
   type OriginRect,
 } from "@/components/origin-modal";
-import { SegmentedControl } from "@/components/segmented-control";
+import { Pagination } from "@/components/pagination";
+import { TableSkeleton } from "@/components/table-skeleton";
 import { useCategories } from "../hooks/use-categories";
-import type { CategoryType } from "../types/category-types";
+import type { CategoryType, CategoryTypeEnum } from "../types/category-types";
 import { CategoryForm } from "./category-form";
 import { CategoryList } from "./category-list";
 
-type TabType = "expense" | "income";
-
-const TAB_OPTIONS = [
-  { value: "expense" as const, label: "Expense" },
-  { value: "income" as const, label: "Income" },
-];
+const PAGE_SIZE = 10;
 
 export function CategoriesSettings() {
-  const { data: categories = [], isLoading, isError, error } = useCategories();
-  const [tab, setTab] = useState<TabType>("expense");
+  const [tab, setTab] = useState<CategoryTypeEnum>("expense");
+  const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<CategoryType | null>(null);
   const [creating, setCreating] = useState(false);
   const [modalOrigin, setModalOrigin] = useState<OriginRect | null>(null);
+  const [celebrateId, setCelebrateId] = useState<string | null>(null);
 
-  const filtered = useMemo(
-    () => categories.filter((category) => category.type === tab),
-    [categories, tab],
-  );
+  const { data, isLoading, isFetching, isError, error } = useCategories({
+    page,
+    limit: PAGE_SIZE,
+    type: tab,
+  });
 
   const modalOpen = creating || Boolean(editing);
 
@@ -65,28 +68,52 @@ export function CategoriesSettings() {
         </button>
       </div>
 
-      <SegmentedControl
+      <Tabs
         value={tab}
-        options={TAB_OPTIONS}
-        onChange={setTab}
-        className="w-full max-w-sm"
-      />
+        onValueChange={(value: string) => {
+          setTab(value as CategoryTypeEnum);
+          setPage(1);
+        }}
+        className="gap-4"
+      >
+        <TabsList className="h-11 w-full max-w-sm rounded-lg p-1">
+          <TabsTrigger value="expense" className="rounded-md">
+            Expense
+          </TabsTrigger>
+          <TabsTrigger value="income" className="rounded-md">
+            Income
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {isLoading ? (
-        <p className="py-10 text-body-md text-muted">Loading…</p>
+        <TableSkeleton columns={3} rows={5} />
       ) : isError ? (
         <p className="text-error">
           {error instanceof Error ? error.message : "Failed to load"}
         </p>
       ) : (
-        <CategoryList
-          categories={filtered}
-          onEdit={(category, origin) => {
-            setModalOrigin(origin);
-            setCreating(false);
-            setEditing(category);
-          }}
-        />
+        <div className={isFetching ? "opacity-70 transition-opacity" : undefined}>
+          <CategoryList
+            categories={data?.items ?? []}
+            celebrateId={celebrateId}
+            onCelebrateComplete={() => setCelebrateId(null)}
+            onEdit={(category, origin) => {
+              setModalOrigin(origin);
+              setCreating(false);
+              setEditing(category);
+            }}
+          />
+          {data ? (
+            <div className="mt-4">
+              <Pagination
+                meta={data}
+                onPageChange={setPage}
+                disabled={isFetching}
+              />
+            </div>
+          ) : null}
+        </div>
       )}
 
       <OriginModal
@@ -95,23 +122,28 @@ export function CategoriesSettings() {
         onClose={closeModal}
         className="max-w-md"
       >
-        <div className="mb-5 flex items-center justify-between">
-          <h3 className="text-h3 text-foreground">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h3 className="text-h4 text-foreground">
             {editing ? "Edit category" : "New category"}
           </h3>
           <button
             type="button"
             onClick={closeModal}
-            className="inline-flex size-9 items-center justify-center rounded-xl bg-background text-muted transition hover:text-foreground"
+            className="inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-secondary text-foreground transition hover:bg-background"
             aria-label="Close"
           >
-            <X className="size-4" />
+            <X className="size-4 stroke-[2.25]" />
           </button>
         </div>
         <CategoryForm
           category={editing}
           defaultType={tab}
           onDone={closeModal}
+          onCreated={(category) => {
+            if (category.type !== tab) setTab(category.type);
+            setPage(1);
+            setCelebrateId(category.id);
+          }}
         />
       </OriginModal>
     </div>

@@ -34,6 +34,8 @@ type OriginModalProps = {
   className?: string;
   closeDisabled?: boolean;
   role?: "dialog" | "alertdialog";
+  /** Skip morph-back close (e.g. shatter exit already handled). */
+  exitInstant?: boolean;
 };
 
 const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
@@ -65,11 +67,17 @@ export function OriginModal({
   className,
   closeDisabled = false,
   role = "dialog",
+  exitInstant = false,
 }: OriginModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const originRef = useRef<OriginRect | null>(origin);
+  const exitInstantRef = useRef(exitInstant);
   const [mounted, setMounted] = useState(false);
   const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    exitInstantRef.current = exitInstant;
+  }, [exitInstant]);
 
   useEffect(() => {
     if (open && origin) {
@@ -85,6 +93,12 @@ export function OriginModal({
         window.requestAnimationFrame(() => setExpanded(true));
       });
       return () => window.cancelAnimationFrame(id);
+    }
+
+    if (exitInstantRef.current) {
+      setMounted(false);
+      setExpanded(false);
+      return;
     }
 
     setExpanded(false);
@@ -103,8 +117,6 @@ export function OriginModal({
       return;
     }
 
-    // Opening first frame OR closing: place at trigger origin.
-    // Opening uses no transition; closing animates back.
     panel.style.transition = open
       ? "none"
       : `transform ${DURATION_MS}ms ${EASE}`;
@@ -138,7 +150,7 @@ export function OriginModal({
         role={role}
         aria-modal="true"
         className={cn(
-          "relative z-10 w-full overflow-hidden rounded-3xl bg-surface p-6 shadow-[0_24px_64px_-16px_rgba(15,23,42,0.28)] ring-1 ring-black/[0.04]",
+          "relative z-10 w-full overflow-hidden rounded-xl bg-surface p-5 shadow-lg ring-1 ring-border",
           "will-change-transform",
           className,
         )}
