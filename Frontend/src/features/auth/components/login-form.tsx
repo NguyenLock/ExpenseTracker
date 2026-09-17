@@ -41,8 +41,8 @@ export function LoginForm() {
           type="email"
           autoComplete="email"
           className={cn(
-            "h-button-md rounded-lg border border-black/10 bg-surface px-3 text-input-value text-foreground outline-none",
-            "placeholder:text-input-placeholder focus:border-primary focus:ring-2 focus:ring-primary/20",
+            "h-12 rounded-2xl border-0 bg-background px-4 text-input-value text-foreground outline-none",
+            "ring-1 ring-black/5 placeholder:text-input-placeholder focus:ring-2 focus:ring-primary/30",
           )}
           placeholder="you@example.com"
           {...register("email")}
@@ -61,8 +61,8 @@ export function LoginForm() {
           type="password"
           autoComplete="current-password"
           className={cn(
-            "h-button-md rounded-lg border border-black/10 bg-surface px-3 text-input-value text-foreground outline-none",
-            "placeholder:text-input-placeholder focus:border-primary focus:ring-2 focus:ring-primary/20",
+            "h-12 rounded-2xl border-0 bg-background px-4 text-input-value text-foreground outline-none",
+            "ring-1 ring-black/5 placeholder:text-input-placeholder focus:ring-2 focus:ring-primary/30",
           )}
           placeholder="••••••••"
           {...register("password")}
@@ -78,8 +78,8 @@ export function LoginForm() {
         type="submit"
         disabled={login.isPending}
         className={cn(
-          "h-button-md rounded-lg bg-primary text-button-md text-white transition-opacity",
-          "hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60",
+          "mt-1 h-12 rounded-2xl bg-primary text-button-md text-white transition-opacity",
+          "hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60",
         )}
       >
         {login.isPending ? "Signing in…" : "Sign in"}

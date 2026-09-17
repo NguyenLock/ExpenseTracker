@@ -33,6 +33,11 @@ export function RegisterForm() {
         ? "Unable to create account"
         : null;
 
+  const fieldClass = cn(
+    "h-12 rounded-2xl border-0 bg-background px-4 text-input-value text-foreground outline-none",
+    "ring-1 ring-black/5 placeholder:text-input-placeholder focus:ring-2 focus:ring-primary/30",
+  );
+
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
@@ -43,10 +48,7 @@ export function RegisterForm() {
           id="name"
           type="text"
           autoComplete="name"
-          className={cn(
-            "h-button-md rounded-lg border border-black/10 bg-surface px-3 text-input-value text-foreground outline-none",
-            "placeholder:text-input-placeholder focus:border-primary focus:ring-2 focus:ring-primary/20",
-          )}
+          className={fieldClass}
           placeholder="Your name"
           {...register("name")}
         />
@@ -61,10 +63,7 @@ export function RegisterForm() {
           id="email"
           type="email"
           autoComplete="email"
-          className={cn(
-            "h-button-md rounded-lg border border-black/10 bg-surface px-3 text-input-value text-foreground outline-none",
-            "placeholder:text-input-placeholder focus:border-primary focus:ring-2 focus:ring-primary/20",
-          )}
+          className={fieldClass}
           placeholder="you@example.com"
           {...register("email")}
         />
@@ -81,10 +80,7 @@ export function RegisterForm() {
           id="password"
           type="password"
           autoComplete="new-password"
-          className={cn(
-            "h-button-md rounded-lg border border-black/10 bg-surface px-3 text-input-value text-foreground outline-none",
-            "placeholder:text-input-placeholder focus:border-primary focus:ring-2 focus:ring-primary/20",
-          )}
+          className={fieldClass}
           placeholder="At least 8 characters"
           {...register("password")}
         />
@@ -99,8 +95,8 @@ export function RegisterForm() {
         type="submit"
         disabled={registerMutation.isPending}
         className={cn(
-          "h-button-md rounded-lg bg-primary text-button-md text-white transition-opacity",
-          "hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60",
+          "mt-1 h-12 rounded-2xl bg-primary text-button-md text-white transition-opacity",
+          "hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60",
         )}
       >
         {registerMutation.isPending ? "Creating account…" : "Create account"}

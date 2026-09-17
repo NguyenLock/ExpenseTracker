@@ -37,6 +37,17 @@ npm run start:dev
 
 Cookies are `HttpOnly` + `Secure` + `SameSite=None` (cross-origin frontend).
 
+## Categories
+
+| Method | Path | Auth |
+|--------|------|------|
+| `GET` | `/categories` | access cookie |
+| `POST` | `/categories` | access cookie |
+| `PATCH` | `/categories/:id` | access cookie |
+| `DELETE` | `/categories/:id` | access cookie |
+
+Fields: `id`, `userId`, `name`, `type` (`income` \| `expense`), `icon`.
+
 ## Scripts
 
 | Command | What it does |
