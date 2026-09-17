@@ -1,0 +1,5 @@
+procs:
+  api:
+    shell: npm run start:dev -w @expense-tracker/api
+  web:
+    shell: npm run dev -w @expense-tracker/web
