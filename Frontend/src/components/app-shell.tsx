@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeftRight,
+  HandCoins,
   LayoutDashboard,
   LogOut,
   Tags,
@@ -33,6 +34,7 @@ import {
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
+  { href: "/debts", label: "Debts", icon: HandCoins },
   { href: "/settings/wallets", label: "Wallets", icon: Wallet },
   { href: "/settings/categories", label: "Categories", icon: Tags },
 ] as const;

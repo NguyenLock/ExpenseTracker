@@ -5,7 +5,10 @@ import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { CategoriesModule } from './modules/categories/categories.module.js';
+import { DashboardModule } from './modules/dashboard/dashboard.module.js';
+import { DebtsModule } from './modules/debts/debts.module.js';
 import { TransactionsModule } from './modules/transactions/transactions.module.js';
+import { TransactionTemplatesModule } from './modules/transaction-templates/transaction-templates.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { WalletsModule } from './modules/wallets/wallets.module.js';
 
@@ -33,6 +36,9 @@ import { WalletsModule } from './modules/wallets/wallets.module.js';
     CategoriesModule,
     WalletsModule,
     TransactionsModule,
+    TransactionTemplatesModule,
+    DebtsModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

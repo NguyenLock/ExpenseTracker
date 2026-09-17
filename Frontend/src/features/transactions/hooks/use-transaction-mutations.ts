@@ -14,7 +14,11 @@ export function useCreateTransaction() {
   return useMutation({
     mutationFn: (data: TransactionFormValues) => createTransaction(data),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["transactions"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
+        queryClient.invalidateQueries({ queryKey: ["wallets"] }),
+      ]);
     },
   });
 }
@@ -31,7 +35,11 @@ export function useUpdateTransaction() {
       data: Partial<TransactionFormValues>;
     }) => updateTransaction(id, data),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["transactions"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
+        queryClient.invalidateQueries({ queryKey: ["wallets"] }),
+      ]);
     },
   });
 }
@@ -42,7 +50,11 @@ export function useDeleteTransaction() {
   return useMutation({
     mutationFn: (id: string) => deleteTransaction(id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["transactions"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
+        queryClient.invalidateQueries({ queryKey: ["wallets"] }),
+      ]);
     },
   });
 }

@@ -21,6 +21,7 @@ import type {
 } from "../types/transaction-types";
 import { TransactionForm } from "./transaction-form";
 import { TransactionList } from "./transaction-list";
+import { TransactionShortcuts } from "@/features/transaction-templates/components/transaction-shortcuts";
 
 const PAGE_SIZE = 10;
 
@@ -92,6 +93,15 @@ export function TransactionsPage() {
           </TabsTrigger>
         </TabsList>
       </Tabs>
+
+      <TransactionShortcuts
+        typeFilter={typeFilter}
+        onQuickCreated={(created) => {
+          if (tab !== "all" && created.type !== tab) setTab(created.type);
+          setPage(1);
+          setCelebrateId(created.id);
+        }}
+      />
 
       {isLoading ? (
         <TableSkeleton columns={5} rows={5} />

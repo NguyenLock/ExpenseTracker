@@ -14,7 +14,10 @@ export function useCreateWallet() {
   return useMutation({
     mutationFn: (data: WalletFormValues) => createWallet(data),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["wallets"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["wallets"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
+      ]);
     },
   });
 }
@@ -31,7 +34,10 @@ export function useUpdateWallet() {
       data: Partial<WalletFormValues>;
     }) => updateWallet(id, data),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["wallets"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["wallets"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
+      ]);
     },
   });
 }
@@ -42,7 +48,10 @@ export function useDeleteWallet() {
   return useMutation({
     mutationFn: (id: string) => deleteWallet(id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["wallets"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["wallets"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
+      ]);
     },
   });
 }

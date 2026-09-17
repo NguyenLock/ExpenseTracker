@@ -4,15 +4,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { paginated } from '../../common/dto/pagination.dto.js';
 import { Category } from '../categories/entities/category.entity.js';
+import { CategoryType } from '../categories/enums/category-type.enum.js';
 import { Wallet } from '../wallets/entities/wallet.entity.js';
 import type { CreateTransactionDto } from './dto/create-transaction.dto.js';
 import type { ListTransactionsQueryDto } from './dto/list-transactions-query.dto.js';
 import type { UpdateTransactionDto } from './dto/update-transaction.dto.js';
 import { Transaction } from './entities/transaction.entity.js';
-import type { CategoryType } from '../categories/enums/category-type.enum.js';
 
 @Injectable()
 export class TransactionsService {
@@ -23,6 +23,7 @@ export class TransactionsService {
     private readonly walletsRepository: Repository<Wallet>,
     @InjectRepository(Category)
     private readonly categoriesRepository: Repository<Category>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async findAll(userId: string, query: ListTransactionsQueryDto) {
@@ -63,58 +64,127 @@ export class TransactionsService {
     await this.assertWallet(userId, dto.walletId);
     await this.assertCategory(userId, dto.categoryId, dto.type);
 
-    const transaction = this.transactionsRepository.create({
-      userId,
-      walletId: dto.walletId,
-      categoryId: dto.categoryId,
-      amount: dto.amount,
-      type: dto.type,
-      note: dto.note?.trim() || null,
-      transactionDate: dto.transactionDate.slice(0, 10),
-    });
+    return this.dataSource.transaction(async (manager) => {
+      const transaction = manager.create(Transaction, {
+        userId,
+        walletId: dto.walletId,
+        categoryId: dto.categoryId,
+        amount: dto.amount,
+        type: dto.type,
+        note: dto.note?.trim() || null,
+        transactionDate: dto.transactionDate.slice(0, 10),
+      });
 
-    const saved = await this.transactionsRepository.save(transaction);
-    return this.findOne(userId, saved.id);
+      const saved = await manager.save(transaction);
+      await this.applyBalanceDelta(
+        manager.getRepository(Wallet),
+        userId,
+        dto.walletId,
+        this.signedAmount(dto.type, dto.amount),
+      );
+
+      const full = await manager.findOne(Transaction, {
+        where: { id: saved.id, userId },
+        relations: { wallet: true, category: true },
+      });
+      return this.toResponse(full!);
+    });
   }
 
   async update(userId: string, id: string, dto: UpdateTransactionDto) {
-    const transaction = await this.transactionsRepository.findOne({
+    const existing = await this.transactionsRepository.findOne({
       where: { id, userId },
     });
-    if (!transaction) {
+    if (!existing) {
       throw new NotFoundException('Transaction not found');
     }
 
-    const nextWalletId = dto.walletId ?? transaction.walletId;
-    const nextCategoryId = dto.categoryId ?? transaction.categoryId;
-    const nextType = dto.type ?? transaction.type;
+    const nextWalletId = dto.walletId ?? existing.walletId;
+    const nextCategoryId = dto.categoryId ?? existing.categoryId;
+    const nextType = dto.type ?? existing.type;
+    const nextAmount = dto.amount ?? existing.amount;
 
     await this.assertWallet(userId, nextWalletId);
     await this.assertCategory(userId, nextCategoryId, nextType);
 
-    if (dto.walletId !== undefined) transaction.walletId = dto.walletId;
-    if (dto.categoryId !== undefined) transaction.categoryId = dto.categoryId;
-    if (dto.amount !== undefined) transaction.amount = dto.amount;
-    if (dto.type !== undefined) transaction.type = dto.type;
-    if (dto.note !== undefined) {
-      transaction.note = dto.note?.trim() ? dto.note.trim() : null;
-    }
-    if (dto.transactionDate !== undefined) {
-      transaction.transactionDate = dto.transactionDate.slice(0, 10);
-    }
+    return this.dataSource.transaction(async (manager) => {
+      const wallets = manager.getRepository(Wallet);
+      const txs = manager.getRepository(Transaction);
 
-    await this.transactionsRepository.save(transaction);
-    return this.findOne(userId, id);
+      // Reverse previous effect, then apply new.
+      await this.applyBalanceDelta(
+        wallets,
+        userId,
+        existing.walletId,
+        -this.signedAmount(existing.type, existing.amount),
+      );
+
+      existing.walletId = nextWalletId;
+      existing.categoryId = nextCategoryId;
+      existing.type = nextType;
+      existing.amount = nextAmount;
+      if (dto.note !== undefined) {
+        existing.note = dto.note?.trim() ? dto.note.trim() : null;
+      }
+      if (dto.transactionDate !== undefined) {
+        existing.transactionDate = dto.transactionDate.slice(0, 10);
+      }
+
+      await txs.save(existing);
+
+      await this.applyBalanceDelta(
+        wallets,
+        userId,
+        nextWalletId,
+        this.signedAmount(nextType, nextAmount),
+      );
+
+      const full = await txs.findOne({
+        where: { id, userId },
+        relations: { wallet: true, category: true },
+      });
+      return this.toResponse(full!);
+    });
   }
 
   async remove(userId: string, id: string) {
-    const transaction = await this.transactionsRepository.findOne({
+    const existing = await this.transactionsRepository.findOne({
       where: { id, userId },
     });
-    if (!transaction) {
+    if (!existing) {
       throw new NotFoundException('Transaction not found');
     }
-    await this.transactionsRepository.remove(transaction);
+
+    await this.dataSource.transaction(async (manager) => {
+      await this.applyBalanceDelta(
+        manager.getRepository(Wallet),
+        userId,
+        existing.walletId,
+        -this.signedAmount(existing.type, existing.amount),
+      );
+      await manager.getRepository(Transaction).remove(existing);
+    });
+  }
+
+  private signedAmount(type: CategoryType, amount: number) {
+    return type === CategoryType.INCOME ? amount : -amount;
+  }
+
+  private async applyBalanceDelta(
+    wallets: Repository<Wallet>,
+    userId: string,
+    walletId: string,
+    delta: number,
+  ) {
+    if (delta === 0) return;
+
+    const wallet = await wallets.findOne({ where: { id: walletId, userId } });
+    if (!wallet) {
+      throw new BadRequestException('Wallet not found');
+    }
+
+    wallet.balance = Number(wallet.balance) + delta;
+    await wallets.save(wallet);
   }
 
   private async assertWallet(userId: string, walletId: string) {
