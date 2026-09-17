@@ -5,6 +5,7 @@ import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { CategoriesModule } from './modules/categories/categories.module.js';
+import { TransactionsModule } from './modules/transactions/transactions.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { WalletsModule } from './modules/wallets/wallets.module.js';
 
@@ -31,6 +32,7 @@ import { WalletsModule } from './modules/wallets/wallets.module.js';
     AuthModule,
     CategoriesModule,
     WalletsModule,
+    TransactionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
