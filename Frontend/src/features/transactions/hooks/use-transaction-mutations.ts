@@ -18,6 +18,7 @@ export function useCreateTransaction() {
         queryClient.invalidateQueries({ queryKey: ["transactions"] }),
         queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
         queryClient.invalidateQueries({ queryKey: ["wallets"] }),
+        queryClient.invalidateQueries({ queryKey: ["budgets"] }),
       ]);
     },
   });
@@ -39,6 +40,7 @@ export function useUpdateTransaction() {
         queryClient.invalidateQueries({ queryKey: ["transactions"] }),
         queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
         queryClient.invalidateQueries({ queryKey: ["wallets"] }),
+        queryClient.invalidateQueries({ queryKey: ["budgets"] }),
       ]);
     },
   });
@@ -54,6 +56,7 @@ export function useDeleteTransaction() {
         queryClient.invalidateQueries({ queryKey: ["transactions"] }),
         queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
         queryClient.invalidateQueries({ queryKey: ["wallets"] }),
+        queryClient.invalidateQueries({ queryKey: ["budgets"] }),
       ]);
     },
   });

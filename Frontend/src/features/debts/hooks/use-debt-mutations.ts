@@ -9,14 +9,13 @@ import {
 } from "../api/debts-api";
 import type { DebtPayload } from "../schemas/debt-schema";
 
-async function invalidateDebtQueries(
-  queryClient: ReturnType<typeof useQueryClient>,
-) {
+async function invalidateDebtQueries(queryClient: ReturnType<typeof useQueryClient>) {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: ["debts"] }),
     queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
     queryClient.invalidateQueries({ queryKey: ["transactions"] }),
     queryClient.invalidateQueries({ queryKey: ["wallets"] }),
+    queryClient.invalidateQueries({ queryKey: ["budgets"] }),
   ]);
 }
 

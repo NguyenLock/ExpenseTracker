@@ -10,10 +10,11 @@ import { TableSkeleton } from "@/components/table-skeleton";
 import { useCurrentUser } from "@/features/auth/hooks/use-current-user";
 import { useDashboard } from "../hooks/use-dashboard";
 import type { DashboardPeriodEnum } from "../types/dashboard-types";
+import { DebtReminders } from "./debt-reminders";
+import { BudgetOverview } from "./budget-overview";
 import { RecentTransactions } from "./recent-transactions";
 import { SummaryCards } from "./summary-cards";
 import { WalletSummary } from "./wallet-summary";
-import { DebtReminders } from "./debt-reminders";
 
 const PERIODS: { value: DashboardPeriodEnum; label: string }[] = [
   { value: "week", label: "This week" },
@@ -77,6 +78,9 @@ export function DashboardOverview() {
           />
           <div className="mt-4">
             <DebtReminders debts={data.debtReminders ?? []} />
+          </div>
+          <div className="mt-4">
+            <BudgetOverview budgets={data.budgets ?? []} />
           </div>
           <div className="mt-4 grid gap-4 lg:grid-cols-5">
             <div className="lg:col-span-3">

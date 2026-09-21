@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { BudgetResponseDto } from '../../budgets/dto/budget-response.dto.js';
 import { DebtResponseDto } from '../../debts/dto/debt-response.dto.js';
 import { TransactionResponseDto } from '../../transactions/dto/transaction-response.dto.js';
 import { WalletType } from '../../wallets/enums/wallet-type.enum.js';
@@ -48,4 +49,7 @@ export class DashboardResponseDto {
 
   @ApiProperty({ type: [DebtResponseDto] })
   debtReminders: DebtResponseDto[];
+
+  @ApiProperty({ type: [BudgetResponseDto] })
+  budgets: BudgetResponseDto[];
 }

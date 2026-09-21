@@ -8,6 +8,7 @@ import {
   HandCoins,
   LayoutDashboard,
   LogOut,
+  PiggyBank,
   Tags,
   Wallet,
 } from "lucide-react";
@@ -34,6 +35,7 @@ import {
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
+  { href: "/budgets", label: "Budgets", icon: PiggyBank },
   { href: "/debts", label: "Debts", icon: HandCoins },
   { href: "/settings/wallets", label: "Wallets", icon: Wallet },
   { href: "/settings/categories", label: "Categories", icon: Tags },

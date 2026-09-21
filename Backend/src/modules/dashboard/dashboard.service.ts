@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
+import { BudgetsService } from '../budgets/budgets.service.js';
 import { CategoryType } from '../categories/enums/category-type.enum.js';
 import { DebtsService } from '../debts/debts.service.js';
 import { Transaction } from '../transactions/entities/transaction.entity.js';
@@ -18,6 +19,7 @@ export class DashboardService {
     @InjectRepository(Wallet)
     private readonly walletsRepository: Repository<Wallet>,
     private readonly debtsService: DebtsService,
+    private readonly budgetsService: BudgetsService,
   ) {}
 
   async getOverview(userId: string, query: DashboardQueryDto) {
@@ -27,7 +29,7 @@ export class DashboardService {
     // Settle auto receivables first so income/balance reflect today.
     const debtReminders = await this.debtsService.getReminders(userId);
 
-    const [totalIncome, totalExpense, walletBalance, recent, wallets] =
+    const [totalIncome, totalExpense, walletBalance, recent, wallets, budgets] =
       await Promise.all([
         this.sumTransactions(userId, CategoryType.INCOME, range),
         this.sumTransactions(userId, CategoryType.EXPENSE, range),
@@ -46,6 +48,9 @@ export class DashboardService {
         this.walletsRepository.find({
           where: { userId },
           order: { balance: 'DESC', name: 'ASC' },
+        }),
+        this.budgetsService.findAll(userId, {
+          month: this.currentMonth(),
         }),
       ]);
 
@@ -79,7 +84,15 @@ export class DashboardService {
         balance: wallet.balance,
       })),
       debtReminders,
+      budgets,
     };
+  }
+
+  private currentMonth() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    return `${y}-${m}`;
   }
 
   private resolveRange(period: DashboardPeriod) {

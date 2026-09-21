@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { AuthModule } from './modules/auth/auth.module.js';
+import { BudgetsModule } from './modules/budgets/budgets.module.js';
 import { CategoriesModule } from './modules/categories/categories.module.js';
 import { DashboardModule } from './modules/dashboard/dashboard.module.js';
 import { DebtsModule } from './modules/debts/debts.module.js';
@@ -38,6 +39,7 @@ import { WalletsModule } from './modules/wallets/wallets.module.js';
     TransactionsModule,
     TransactionTemplatesModule,
     DebtsModule,
+    BudgetsModule,
     DashboardModule,
   ],
   controllers: [AppController],
