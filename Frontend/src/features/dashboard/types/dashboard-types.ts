@@ -1,3 +1,4 @@
+import type { BudgetType } from "@/features/budgets/types/budget-types";
 import type { DebtType } from "@/features/debts/types/debt-types";
 import type { TransactionType } from "@/features/transactions/types/transaction-types";
 import type { WalletTypeEnum } from "@/features/wallets/types/wallet-types";
@@ -22,4 +23,5 @@ export type DashboardType = {
   recentTransactions: TransactionType[];
   wallets: DashboardWalletSummaryType[];
   debtReminders: DebtType[];
+  budgets: BudgetType[];
 };

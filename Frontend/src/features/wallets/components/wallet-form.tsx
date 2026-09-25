@@ -10,6 +10,7 @@ import {
 } from "@/components/animate-ui/components/radix/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MoneyInput } from "@/components/ui/money-input";
 import { ApiError } from "@/lib/api-client";
 import {
   useCreateWallet,
@@ -139,13 +140,20 @@ export function WalletForm({ wallet, onDone, onCreated }: WalletFormProps) {
         >
           Balance
         </label>
-        <Input
-          id="wallet-balance"
-          type="number"
-          step="0.01"
-          min="0"
-          className="h-10"
-          {...register("balance", { valueAsNumber: true })}
+        <Controller
+          name="balance"
+          control={control}
+          render={({ field }) => (
+            <MoneyInput
+              id="wallet-balance"
+              className="h-10"
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              name={field.name}
+              ref={field.ref}
+            />
+          )}
         />
         {errors.balance ? (
           <p className="text-error">{errors.balance.message}</p>

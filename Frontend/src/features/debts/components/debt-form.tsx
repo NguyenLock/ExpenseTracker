@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
+import { MoneyInput } from "@/components/ui/money-input";
 import {
   Select,
   SelectContent,
@@ -21,6 +22,7 @@ import {
 import { useCategories } from "@/features/categories/hooks/use-categories";
 import { useWallets } from "@/features/wallets/hooks/use-wallets";
 import { ApiError } from "@/lib/api-client";
+import { formatMoneyDots } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import {
   useCreateDebt,
@@ -47,10 +49,7 @@ function todayIsoDate() {
 }
 
 function formatMoney(value: number) {
-  return new Intl.NumberFormat(undefined, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(value);
+  return formatMoneyDots(value) || "0";
 }
 
 type DebtFormProps = {
@@ -232,13 +231,20 @@ export function DebtForm({ debt, onDone }: DebtFormProps) {
         <label htmlFor="debt-amount" className="text-label-md text-foreground">
           {useInstallment ? "Số tiền mỗi tháng" : "Số tiền"}
         </label>
-        <Input
-          id="debt-amount"
-          type="number"
-          step="0.01"
-          min="0.01"
-          className="h-10"
-          {...register("amount", { valueAsNumber: true })}
+        <Controller
+          name="amount"
+          control={control}
+          render={({ field }) => (
+            <MoneyInput
+              id="debt-amount"
+              className="h-10"
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              name={field.name}
+              ref={field.ref}
+            />
+          )}
         />
         {errors.amount ? (
           <p className="text-error">{errors.amount.message}</p>
