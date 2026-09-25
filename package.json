@@ -1,0 +1,21 @@
+{
+  "name": "expense-tracker",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "Frontend",
+    "Backend"
+  ],
+  "scripts": {
+    "start": "mprocs",
+    "dev": "npm run start",
+    "build": "npm run build -w @expense-tracker/api && npm run build -w @expense-tracker/web",
+    "lint": "npm run lint -w @expense-tracker/api && npm run lint -w @expense-tracker/web",
+    "db:up": "npm run db:up -w @expense-tracker/api",
+    "db:down": "npm run db:down -w @expense-tracker/api",
+    "db:logs": "npm run db:logs -w @expense-tracker/api"
+  },
+  "devDependencies": {
+    "mprocs": "^0.7.3"
+  }
+}

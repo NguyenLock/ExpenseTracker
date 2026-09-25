@@ -1,3 +1,27 @@
-.agents
-.cursor
+# Dependencies
+node_modules/
+Frontend/node_modules/
+Backend/node_modules/
+
+# Env
+.env
+.env.*
+!.env.example
+Frontend/.env.local
+Backend/.env
+
+# Build
+Frontend/.next/
+Frontend/out/
+Backend/dist/
+coverage/
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+
+# Agents / Cursor local
+.agents/
+.cursor/
 skills-lock.json
