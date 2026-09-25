@@ -10,6 +10,7 @@ import {
   LogOut,
   PiggyBank,
   Tags,
+  Target,
   Wallet,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -36,6 +37,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { href: "/budgets", label: "Budgets", icon: PiggyBank },
+  { href: "/goals", label: "Goals", icon: Target },
   { href: "/debts", label: "Debts", icon: HandCoins },
   { href: "/settings/wallets", label: "Wallets", icon: Wallet },
   { href: "/settings/categories", label: "Categories", icon: Tags },

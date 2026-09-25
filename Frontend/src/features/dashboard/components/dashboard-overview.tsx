@@ -12,6 +12,7 @@ import { useDashboard } from "../hooks/use-dashboard";
 import type { DashboardPeriodEnum } from "../types/dashboard-types";
 import { DebtReminders } from "./debt-reminders";
 import { BudgetOverview } from "./budget-overview";
+import { GoalsOverview } from "./goals-overview";
 import { RecentTransactions } from "./recent-transactions";
 import { SummaryCards } from "./summary-cards";
 import { WalletSummary } from "./wallet-summary";
@@ -81,6 +82,9 @@ export function DashboardOverview() {
           </div>
           <div className="mt-4">
             <BudgetOverview budgets={data.budgets ?? []} />
+          </div>
+          <div className="mt-4">
+            <GoalsOverview />
           </div>
           <div className="mt-4 grid gap-4 lg:grid-cols-5">
             <div className="lg:col-span-3">
