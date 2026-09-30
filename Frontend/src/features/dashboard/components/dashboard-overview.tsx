@@ -86,7 +86,7 @@ export function DashboardOverview() {
           <div className="mt-4">
             <GoalsOverview />
           </div>
-          <div className="mt-4 grid gap-4 lg:grid-cols-5">
+          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-5">
             <div className="lg:col-span-3">
               <RecentTransactions transactions={data.recentTransactions} />
             </div>

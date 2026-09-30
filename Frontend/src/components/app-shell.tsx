@@ -16,6 +16,7 @@ import {
 import type { ReactNode } from "react";
 import { logoutUser } from "@/features/auth/api/auth-api";
 import { useCurrentUser } from "@/features/auth/hooks/use-current-user";
+import { NotificationBell } from "@/features/notifications/components/notification-bell";
 import {
   Sidebar,
   SidebarContent,
@@ -140,6 +141,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               <p className="text-caption text-muted-foreground">Settings</p>
             ) : null}
             <h1 className="truncate text-h3 text-foreground">{title}</h1>
+          </div>
+          <div className="ml-auto">
+            <NotificationBell />
           </div>
         </header>
 
