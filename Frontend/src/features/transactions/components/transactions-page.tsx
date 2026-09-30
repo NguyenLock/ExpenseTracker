@@ -37,12 +37,33 @@ function toLocalIsoDate(date = new Date()) {
   return `${y}-${m}-${d}`;
 }
 
-export function TransactionsPage() {
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+type TransactionsPageProps = {
+  initialFrom?: string;
+  initialTo?: string;
+};
+
+export function TransactionsPage({
+  initialFrom,
+  initialTo,
+}: TransactionsPageProps = {}) {
+  const hasInitialRange =
+    !!initialFrom &&
+    !!initialTo &&
+    ISO_DATE.test(initialFrom) &&
+    ISO_DATE.test(initialTo);
   const [tab, setTab] = useState<FilterTab>("all");
   const [page, setPage] = useState(1);
-  const [datePreset, setDatePreset] = useState<DatePreset>("all");
-  const [fromDate, setFromDate] = useState(toLocalIsoDate);
-  const [toDate, setToDate] = useState(toLocalIsoDate);
+  const [datePreset, setDatePreset] = useState<DatePreset>(
+    hasInitialRange ? "custom" : "all",
+  );
+  const [fromDate, setFromDate] = useState(() =>
+    hasInitialRange ? initialFrom : toLocalIsoDate(),
+  );
+  const [toDate, setToDate] = useState(() =>
+    hasInitialRange ? initialTo : toLocalIsoDate(),
+  );
   const [editing, setEditing] = useState<TransactionType | null>(null);
   const [creating, setCreating] = useState(false);
   const [modalOrigin, setModalOrigin] = useState<OriginRect | null>(null);

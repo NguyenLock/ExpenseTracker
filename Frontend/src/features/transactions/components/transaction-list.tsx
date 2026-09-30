@@ -67,10 +67,108 @@ export function TransactionList({
         ? "Unable to delete transaction"
         : null;
 
+  const groups: { date: string; items: TransactionType[] }[] = [];
+  for (const transaction of transactions) {
+    const date = transaction.transactionDate.slice(0, 10);
+    const last = groups.at(-1);
+    if (last?.date === date) last.items.push(transaction);
+    else groups.push({ date, items: [transaction] });
+  }
+
+  const requestDelete = (transaction: TransactionType, el: HTMLElement) => {
+    setDeleteOrigin(originFromElement(el));
+    setPendingDelete(transaction);
+  };
+
   return (
     <div className="flex flex-col gap-3">
       {errorMessage ? <p className="text-error">{errorMessage}</p> : null}
-      <div className="overflow-hidden rounded-xl bg-surface shadow-sm ring-1 ring-border">
+
+      <div className="flex flex-col gap-4 sm:hidden">
+        {groups.map((group) => {
+          const net = group.items.reduce(
+            (sum, t) => sum + (t.type === "expense" ? -t.amount : t.amount),
+            0,
+          );
+          return (
+            <section key={group.date}>
+              <div className="mb-1.5 flex items-center justify-between px-1 text-caption text-muted-foreground">
+                <span className="font-medium">{formatDate(group.date)}</span>
+                <span className="tabular-nums">
+                  {net < 0 ? "−" : "+"}
+                  {formatAmount(Math.abs(net))}
+                </span>
+              </div>
+              <ul className="divide-y divide-border overflow-hidden rounded-xl bg-surface shadow-sm ring-1 ring-border">
+                {group.items.map((transaction) => (
+                  <li
+                    key={transaction.id}
+                    className={cn(
+                      "flex items-center transition-colors",
+                      celebrateId === transaction.id && "bg-primary/5",
+                    )}
+                  >
+                    <button
+                      type="button"
+                      onClick={(event) =>
+                        onEdit(
+                          transaction,
+                          originFromElement(event.currentTarget),
+                        )
+                      }
+                      aria-label={`Edit ${transaction.categoryName ?? "transaction"}`}
+                      className="flex min-w-0 flex-1 items-center gap-3 py-3 pl-3.5 text-left active:bg-background"
+                    >
+                      {transaction.categoryIcon ? (
+                        <CategoryIconBadge
+                          icon={transaction.categoryIcon}
+                          size="sm"
+                        />
+                      ) : (
+                        <span className="size-9 shrink-0 rounded-full bg-secondary" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {transaction.categoryName ?? "Transaction"}
+                        </p>
+                        <p className="truncate text-caption text-muted-foreground">
+                          {[transaction.walletName, transaction.note]
+                            .filter(Boolean)
+                            .join(" · ") || "—"}
+                        </p>
+                      </div>
+                      <span
+                        className={cn(
+                          "shrink-0 text-sm font-semibold tabular-nums",
+                          transaction.type === "expense"
+                            ? "text-danger"
+                            : "text-success",
+                        )}
+                      >
+                        {transaction.type === "expense" ? "−" : "+"}
+                        {formatAmount(transaction.amount)}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={deleteMutation.isPending}
+                      onClick={(event) =>
+                        requestDelete(transaction, event.currentTarget)
+                      }
+                      className="mx-1.5 inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-zinc-400 hover:bg-danger/10 hover:text-danger disabled:opacity-60"
+                      aria-label="Delete transaction"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          );
+        })}
+      </div>
+
+      <div className="hidden overflow-hidden rounded-xl bg-surface shadow-sm ring-1 ring-border sm:block">
         <table className="w-full text-left">
           <thead className="border-b border-border bg-background/70">
             <tr>
@@ -163,10 +261,9 @@ export function TransactionList({
                     <button
                       type="button"
                       disabled={deleteMutation.isPending}
-                      onClick={(event) => {
-                        setDeleteOrigin(originFromElement(event.currentTarget));
-                        setPendingDelete(transaction);
-                      }}
+                      onClick={(event) =>
+                        requestDelete(transaction, event.currentTarget)
+                      }
                       className="inline-flex size-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-danger/10 hover:text-danger disabled:opacity-60"
                       aria-label="Delete transaction"
                     >
