@@ -16,6 +16,7 @@ import {
 import type { ReactNode } from "react";
 import { logoutUser } from "@/features/auth/api/auth-api";
 import { useCurrentUser } from "@/features/auth/hooks/use-current-user";
+import { AiChatBubble } from "@/features/ai/components/ai-chat-bubble";
 import { NotificationBell } from "@/features/notifications/components/notification-bell";
 import {
   Sidebar,
@@ -151,6 +152,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           {children}
         </div>
       </SidebarInset>
+
+      <AiChatBubble />
     </SidebarProvider>
   );
 }

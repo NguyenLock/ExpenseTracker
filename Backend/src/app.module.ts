@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
+import { AiModule } from './modules/ai/ai.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { BudgetsModule } from './modules/budgets/budgets.module.js';
 import { CategoriesModule } from './modules/categories/categories.module.js';
@@ -45,6 +46,7 @@ import { WalletsModule } from './modules/wallets/wallets.module.js';
     GoalsModule,
     NotificationsModule,
     DashboardModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService],
