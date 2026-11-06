@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
+import { getDataSourceOptions } from './database/data-source.js';
 import { AiModule } from './modules/ai/ai.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { BudgetsModule } from './modules/budgets/budgets.module.js';
@@ -24,16 +25,15 @@ import { WalletsModule } from './modules/wallets/wallets.module.js';
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.get<string>('DB_HOST', 'localhost'),
-        port: Number(config.get('DB_PORT', 5432)),
-        username: config.get<string>('DB_USER', 'expense'),
-        password: config.get<string>('DB_PASSWORD', 'expense'),
-        database: config.get<string>('DB_NAME', 'expense_tracker'),
-        autoLoadEntities: true,
-        synchronize: config.get<string>('NODE_ENV') !== 'production',
-      }),
+      useFactory: (config: ConfigService) =>
+        getDataSourceOptions({
+          DATABASE_URL: config.get<string>('DATABASE_URL'),
+          DB_HOST: config.get<string>('DB_HOST'),
+          DB_PORT: config.get<string>('DB_PORT'),
+          DB_USER: config.get<string>('DB_USER'),
+          DB_PASSWORD: config.get<string>('DB_PASSWORD'),
+          DB_NAME: config.get<string>('DB_NAME'),
+        }),
     }),
     UsersModule,
     AuthModule,

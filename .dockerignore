@@ -1,0 +1,14 @@
+# Used when the build context is the repo root (see Backend/Dockerfile).
+node_modules
+**/node_modules
+**/dist
+**/.next
+**/.env
+**/.env.*
+!**/.env.example
+.git
+.cursor
+coverage
+**/*.log
+**/*.tsbuildinfo
+.DS_Store

@@ -1,0 +1,12 @@
+node_modules
+dist
+.env
+.env.*
+coverage
+*.log
+*.tsbuildinfo
+test
+**/*.spec.ts
+**/*.e2e-spec.ts
+.git
+.DS_Store

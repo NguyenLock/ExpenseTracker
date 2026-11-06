@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint -w @expense-tracker/api
+      - run: npm run lint -w @expense-tracker/web
+      - run: npm run test -w @expense-tracker/api
+      - run: npm run build -w @expense-tracker/api
+      - run: npm run build -w @expense-tracker/web
+        env:
+          # Build-time public URL. Not a secret. Production sets the real one on Vercel.
+          NEXT_PUBLIC_API_URL: http://localhost:3001

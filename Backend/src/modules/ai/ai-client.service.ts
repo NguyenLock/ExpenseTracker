@@ -36,9 +36,15 @@ export class AiClientService {
     tools?: AiToolDefinition[];
     jsonMode?: boolean;
   }): Promise<AiMessage> {
-    const baseUrl = this.config.get<string>('AI_BASE_URL');
-    const apiKey = this.config.get<string>('AI_API_KEY');
+    const baseUrl = this.config.get<string>('AI_BASE_URL')?.trim();
+    const apiKey = this.config.get<string>('AI_API_KEY')?.trim();
     const model = this.config.get<string>('AI_MODEL', 'gpt-4o-mini');
+
+    if (!baseUrl || !apiKey) {
+      throw new BadGatewayException(
+        'AI is not configured. Set AI_BASE_URL and AI_API_KEY.',
+      );
+    }
 
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
