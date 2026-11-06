@@ -100,7 +100,7 @@ export function DebtList({ debts, onEdit }: DebtListProps) {
                     ? `Window ${formatDate(debt.windowStart)} – ${formatDate(debt.windowEnd)}`
                     : `Due ${formatDate(debt.dueDate)}`}
                   {debt.installmentCount > 1
-                    ? ` · ${debt.paidInstallments}/${debt.installmentCount}`
+                    ? ` · ${debt.status === "open" ? debt.paidInstallments + 1 : debt.paidInstallments}/${debt.installmentCount}`
                     : ""}
                   {" · "}
                   {debt.walletName ?? "Wallet"} ·{" "}

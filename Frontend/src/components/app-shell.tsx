@@ -16,6 +16,8 @@ import {
 import type { ReactNode } from "react";
 import { logoutUser } from "@/features/auth/api/auth-api";
 import { useCurrentUser } from "@/features/auth/hooks/use-current-user";
+import { AiChatBubble } from "@/features/ai/components/ai-chat-bubble";
+import { NotificationBell } from "@/features/notifications/components/notification-bell";
 import {
   Sidebar,
   SidebarContent,
@@ -141,12 +143,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             ) : null}
             <h1 className="truncate text-h3 text-foreground">{title}</h1>
           </div>
+          <div className="ml-auto">
+            <NotificationBell />
+          </div>
         </header>
 
         <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
           {children}
         </div>
       </SidebarInset>
+
+      <AiChatBubble />
     </SidebarProvider>
   );
 }

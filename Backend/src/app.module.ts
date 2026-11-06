@@ -3,12 +3,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
+import { AiModule } from './modules/ai/ai.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { BudgetsModule } from './modules/budgets/budgets.module.js';
 import { CategoriesModule } from './modules/categories/categories.module.js';
 import { DashboardModule } from './modules/dashboard/dashboard.module.js';
 import { DebtsModule } from './modules/debts/debts.module.js';
 import { GoalsModule } from './modules/goals/goals.module.js';
+import { NotificationsModule } from './modules/notifications/notifications.module.js';
 import { TransactionsModule } from './modules/transactions/transactions.module.js';
 import { TransactionTemplatesModule } from './modules/transaction-templates/transaction-templates.module.js';
 import { UsersModule } from './modules/users/users.module.js';
@@ -42,7 +44,9 @@ import { WalletsModule } from './modules/wallets/wallets.module.js';
     DebtsModule,
     BudgetsModule,
     GoalsModule,
+    NotificationsModule,
     DashboardModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService],
