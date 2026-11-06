@@ -12,8 +12,6 @@ services:
     dockerContext: .
     healthCheckPath: /health
     autoDeploy: true
-    # One-off container before traffic. Not inside the request path.
-    preDeployCommand: node dist/database/migrate.js
     envVars:
       - key: NODE_ENV
         value: production

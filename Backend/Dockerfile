@@ -26,4 +26,6 @@ COPY --from=build /app/Backend/node_modules ./Backend/node_modules
 COPY --from=build /app/Backend/dist ./Backend/dist
 WORKDIR /app/Backend
 EXPOSE 3001
-CMD ["node", "dist/main.js"]
+# Render free cannot use preDeployCommand. Migrate once per boot, then listen.
+# ponytail: safe for the single free-tier instance. Use a pre-deploy command if you leave the free plan and run more than one instance.
+CMD ["sh", "-c", "node dist/database/migrate.js && node dist/main.js"]

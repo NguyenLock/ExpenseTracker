@@ -241,7 +241,7 @@ Free tiers, no card:
    | `AI_BASE_URL` / `AI_API_KEY` / `AI_MODEL` | optional. Blank is fine; the API still boots. Chat returns 502 until they are set. |
 
    Do not set `PORT`. Render injects it and the process listens on that value.
-4. Deploy. Before traffic, Render runs `node dist/database/migrate.js` once (`preDeployCommand`) against the empty Neon database. Open `https://YOUR_SERVICE.onrender.com/health` and expect `"status":"ok"`. The first hit after idle is about a minute.
+4. Deploy. The free plan cannot run a pre-deploy command, so the container runs `node dist/database/migrate.js` and then starts the API. Open `https://YOUR_SERVICE.onrender.com/health` and expect `"status":"ok"`. The first hit after idle is about a minute.
 5. Vercel: import this repo. There is no `vercel.json`. Set:
 
    | Setting | Value |
